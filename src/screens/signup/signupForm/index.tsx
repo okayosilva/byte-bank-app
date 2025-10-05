@@ -1,11 +1,13 @@
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { useAuthContext } from "@/context/auth.context";
 import { PublicStackParamList } from "@/routes/stack/publicStacks";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { signupFormSchema } from "./schema";
 
 export interface SignupFormProps {
@@ -20,6 +22,8 @@ interface SignupFormComponentProps {
 }
 
 export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     control,
     handleSubmit,
@@ -37,7 +41,30 @@ export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
   const { navigate } =
     useNavigation<StackNavigationProp<PublicStackParamList>>();
 
-  const onSubmit = async () => {};
+  const { handleSignup } = useAuthContext();
+
+  const onSubmit = async (data: SignupFormProps) => {
+    try {
+      setIsLoading(true);
+      await handleSignup(data);
+
+      Alert.alert(
+        "Cadastro realizado!",
+        "Enviamos um email de confirmação para você. Verifique sua caixa de entrada e spam, depois volte aqui para fazer login.",
+        [
+          {
+            text: "OK",
+            onPress: () => navigate("login"),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error("Erro no cadastro:", error);
+      Alert.alert("Erro", error.message || "Erro no cadastro");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -69,7 +96,12 @@ export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
       />
 
       <View className="mt-2">
-        <Button onPress={handleSubmit(onSubmit)}>Cadastrar</Button>
+        <Button
+          onPress={handleSubmit(onSubmit)}
+          disabled={isLoading || isSubmitting}
+        >
+          {isLoading || isSubmitting ? "Cadastrando..." : "Cadastrar"}
+        </Button>
 
         <TouchableOpacity
           activeOpacity={0.9}
