@@ -74,15 +74,15 @@ export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
         password,
       });
 
-      // if (error) {
-      //   console.error("Erro no login:", error.message);
+      if (error) {
+        console.error("Erro no login:", error.message);
 
-      //   if (error.message.includes("Email not confirmed")) {
-      //     throw new Error("EMAIL_NOT_CONFIRMED");
-      //   }
+        if (error.message.includes("Email not confirmed")) {
+          throw new Error("EMAIL_NOT_CONFIRMED");
+        }
 
-      //   throw new Error(error.message);
-      // }
+        throw new Error(error.message);
+      }
 
       if (data.user) {
         setUser(data.user);
@@ -110,13 +110,6 @@ export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
         console.error("Erro no cadastro:", error.message);
         throw new Error(error.message);
       }
-
-      // Não fazer login automático após cadastro
-      // O usuário precisa confirmar o email primeiro
-      // if (data.user) {
-      //   setUser(data.user);
-      //   setToken(data.session?.access_token || null);
-      // }
     } catch (error) {
       console.error("Erro no cadastro:", error);
       throw error;

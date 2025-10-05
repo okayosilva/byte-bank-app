@@ -1,14 +1,24 @@
 import { useAuthContext } from "@/context/auth.context";
+import { useSnackbarContext } from "@/context/snackbar.context";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export const Home = () => {
   const { user, handleLogout } = useAuthContext();
+  const { notify } = useSnackbarContext();
 
   const handleLogoutPress = async () => {
     try {
       await handleLogout();
+      notify({
+        message: "Logout realizado com sucesso!",
+        type: "SUCCESS",
+      });
     } catch (error) {
       console.error("Erro no logout:", error);
+      notify({
+        message: "Erro ao fazer logout",
+        type: "ERROR",
+      });
     }
   };
 
@@ -29,6 +39,8 @@ export const Home = () => {
           </Text>
           <Text className="text-gray-600">ID: {user?.id}</Text>
         </View>
+
+        {/* Botões para testar a snack bar */}
 
         <TouchableOpacity
           onPress={handleLogoutPress}

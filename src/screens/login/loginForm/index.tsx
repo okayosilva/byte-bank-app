@@ -1,13 +1,14 @@
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { useAuthContext } from "@/context/auth.context";
+import { useSnackbarContext } from "@/context/snackbar.context";
 import { PublicStackParamList } from "@/routes/stack/publicStacks";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { loginFormSchema } from "./schema";
 
 export interface LoginFormProps {
@@ -35,6 +36,7 @@ export const LoginForm = () => {
   });
 
   const { handleAuth, resendConfirmationEmail } = useAuthContext();
+  const { notify } = useSnackbarContext();
 
   const { navigate } =
     useNavigation<StackNavigationProp<PublicStackParamList>>();
@@ -44,6 +46,10 @@ export const LoginForm = () => {
       setIsLoading(true);
       setLoginError(""); // Limpar erro anterior
       await handleAuth(data);
+      notify({
+        message: "Login realizado com sucesso!",
+        type: "SUCCESS",
+      });
     } catch (error: any) {
       if (error.message === "EMAIL_NOT_CONFIRMED") {
         setUserEmail(data.email);
@@ -55,9 +61,19 @@ export const LoginForm = () => {
           error.message.includes("email") ||
           error.message.includes("password")
         ) {
-          setLoginError("Email ou senha incorretos");
+          const errorMessage = "Email ou senha incorretos";
+          setLoginError(errorMessage);
+          notify({
+            message: errorMessage,
+            type: "ERROR",
+          });
         } else {
-          setLoginError(error.message || "Erro no login");
+          const errorMessage = error.message || "Erro no login";
+          setLoginError(errorMessage);
+          notify({
+            message: errorMessage,
+            type: "ERROR",
+          });
         }
       }
     } finally {
@@ -68,13 +84,16 @@ export const LoginForm = () => {
   const handleResendEmail = async () => {
     try {
       await resendConfirmationEmail(userEmail);
-      Alert.alert(
-        "Email reenviado",
-        "Verifique sua caixa de entrada e spam para o email de confirmação."
-      );
+      notify({
+        message: "Email de confirmação reenviado com sucesso!",
+        type: "SUCCESS",
+      });
       setShowEmailConfirmation(false);
     } catch (error: any) {
-      Alert.alert("Erro", error.message || "Erro ao reenviar email");
+      notify({
+        message: error.message || "Erro ao reenviar email",
+        type: "ERROR",
+      });
     }
   };
 
