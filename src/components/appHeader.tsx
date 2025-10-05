@@ -23,7 +23,7 @@ export const AppHeader = () => {
         </Text>
 
         <View className="mt-2">
-          <Text className="text-background-tertiary text-3xl font-medium">
+          <Text className="text-background-tertiary text-3xl font-bold">
             R$ 1.000.000.000,00
           </Text>
           <Text className="text-gray-800 text-base font-regular mt-1">
