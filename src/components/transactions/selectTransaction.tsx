@@ -3,9 +3,14 @@ import { colors } from "@/theme/colors";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
 import { ButtonIconSelect } from "./buttonIconSelect";
+import { NewTransaction } from "./newTransaction";
 
 export const SelectTransaction = () => {
-  const { closeBottomSheet } = useBottomSheetContext();
+  const { closeBottomSheet, openBottomSheet } = useBottomSheetContext();
+
+  const handleTransactionType = (type: "income" | "expense") => {
+    openBottomSheet(<NewTransaction transactionType={type} />, 1);
+  };
 
   return (
     <View>
@@ -29,6 +34,7 @@ export const SelectTransaction = () => {
             background: "bg-accent-brand/10",
             icon: colors["accent-brand-light"],
           }}
+          onPress={() => handleTransactionType("income")}
         />
         <ButtonIconSelect
           title="Saída"
@@ -37,6 +43,7 @@ export const SelectTransaction = () => {
             background: "bg-accent-red/10",
             icon: colors["accent-red"],
           }}
+          onPress={() => handleTransactionType("expense")}
         />
       </View>
     </View>
