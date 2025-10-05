@@ -1,10 +1,12 @@
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { PublicStackParamList } from "@/routes/stack/publicStacks";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useForm } from "react-hook-form";
 import { Text, TouchableOpacity, View } from "react-native";
+import { signupFormSchema } from "./schema";
 
 export interface SignupFormProps {
   email: string;
@@ -13,15 +15,29 @@ export interface SignupFormProps {
   confirmPassword: string;
 }
 
-export const SignupForm = () => {
+interface SignupFormComponentProps {
+  onNavigateBack?: () => void;
+}
+
+export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
   const {
     control,
     handleSubmit,
     formState: { isValid, isSubmitting, errors },
-  } = useForm<SignupFormProps>({});
+  } = useForm<SignupFormProps>({
+    defaultValues: {
+      email: "",
+      password: "",
+      name: "",
+      confirmPassword: "",
+    },
+    resolver: yupResolver(signupFormSchema),
+  });
 
   const { navigate } =
     useNavigation<StackNavigationProp<PublicStackParamList>>();
+
+  const onSubmit = async () => {};
 
   return (
     <>
@@ -53,9 +69,15 @@ export const SignupForm = () => {
       />
 
       <View className="mt-2">
-        <Button>Cadastrar</Button>
+        <Button onPress={handleSubmit(onSubmit)}>Cadastrar</Button>
 
-        <TouchableOpacity activeOpacity={0.9} onPress={() => navigate("login")}>
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            onNavigateBack?.();
+            navigate("login");
+          }}
+        >
           <View className="flex-row items-center justify-center">
             <Text className="text-center mt-9 text-base font-medium text-gray-500">
               Voltar para o login

@@ -1,10 +1,12 @@
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { PublicStackParamList } from "@/routes/stack/publicStacks";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useForm } from "react-hook-form";
 import { Text, TouchableOpacity, View } from "react-native";
+import { loginFormSchema } from "./schema";
 
 export interface LoginFormProps {
   email: string;
@@ -16,10 +18,18 @@ export const LoginForm = () => {
     control,
     handleSubmit,
     formState: { isValid, isSubmitting, errors },
-  } = useForm<LoginFormProps>({});
+  } = useForm<LoginFormProps>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    resolver: yupResolver(loginFormSchema),
+  });
 
   const { navigate } =
     useNavigation<StackNavigationProp<PublicStackParamList>>();
+
+  const onSubmit = async () => {};
 
   return (
     <>
@@ -38,7 +48,7 @@ export const LoginForm = () => {
       />
 
       <View className="mt-2">
-        <Button>Entrar</Button>
+        <Button onPress={handleSubmit(onSubmit)}>Entrar</Button>
 
         <TouchableOpacity
           activeOpacity={0.9}

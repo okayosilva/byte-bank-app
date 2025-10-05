@@ -1,18 +1,29 @@
+import { AnimatedView } from "@/components/animatedView";
 import { AuthHeader } from "@/components/authHeader";
 import { DismissKeyboardView } from "@/components/dismissKeyboardView";
-import React from "react";
+import { useAnimatedView } from "@/utils/hooks/useAnimatedView";
+import React, { useEffect } from "react";
 import { View } from "react-native";
 import { SignupForm } from "./signupForm";
 
 export const Signup = () => {
+  const { fadeOut, fadeIn, fadeAnim } = useAnimatedView();
+
+  useEffect(() => {
+    fadeIn();
+  }, []);
+
   return (
     <DismissKeyboardView>
-      <View className="flex-1 w-[82%] self-center justify-center">
+      <AnimatedView
+        fadeAnim={fadeAnim}
+        className="flex-1 w-[82%] self-center justify-center"
+      >
         <AuthHeader />
         <View className="gap-4">
-          <SignupForm />
+          <SignupForm onNavigateBack={fadeOut} />
         </View>
-      </View>
+      </AnimatedView>
     </DismissKeyboardView>
   );
 };
