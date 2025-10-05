@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../button";
 import { Input } from "../input";
-import { SelectTransaction } from "./selectTransaction";
 
 type NewTransactionProps = {
   transactionType: "income" | "expense";
@@ -48,8 +47,8 @@ export const NewTransaction = ({ transactionType }: NewTransactionProps) => {
   const isIncome = transactionType === "income";
   const typeTitle = isIncome ? "Nova Entrada" : "Nova Saída";
 
-  const handleSelectTransaction = () => {
-    openBottomSheet(<SelectTransaction />, 0);
+  const handleGoBack = () => {
+    closeBottomSheet();
   };
 
   return (
@@ -57,7 +56,7 @@ export const NewTransaction = ({ transactionType }: NewTransactionProps) => {
       <View className="p-6">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-3">
-            <TouchableOpacity onPress={() => handleSelectTransaction()}>
+            <TouchableOpacity onPress={() => handleGoBack()}>
               <MaterialIcons
                 name={"chevron-left"}
                 size={24}

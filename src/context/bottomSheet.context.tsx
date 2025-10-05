@@ -31,12 +31,14 @@ export const BottomSheetContextProvider: FC<PropsWithChildren> = ({
 
   const openBottomSheet = useCallback(
     (newContent: React.ReactNode, newIndex: number) => {
-      setContent(newContent);
-      setIndex(newIndex);
-      setIsOpen(true);
-      requestAnimationFrame(() => {
-        bottomSheetRef.current?.snapToIndex(newIndex);
-      });
+      if (newIndex >= 0) {
+        setContent(newContent);
+        setIndex(newIndex);
+        setIsOpen(true);
+        requestAnimationFrame(() => {
+          bottomSheetRef.current?.snapToIndex(newIndex);
+        });
+      }
     },
     []
   );
@@ -51,6 +53,7 @@ export const BottomSheetContextProvider: FC<PropsWithChildren> = ({
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
       setIsOpen(false);
+      setContent(null);
     }
   }, []);
 

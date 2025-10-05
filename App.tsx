@@ -5,6 +5,7 @@ import "react-native-url-polyfill/auto";
 import { BottomSheetContextProvider } from "@/context/bottomSheet.context";
 import { SnackbarContextProvider } from "@/context/snackbar.context";
 import "@/styles/global.css";
+import "@/utils/reanimated.config";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function App() {
