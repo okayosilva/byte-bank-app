@@ -779,10 +779,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👨‍💻 Equipe
 
-**Integrantes:**
+**Integrantes do Grupo 40:**
 
 - Kayo Henrique da Silva Pinto - RM 362479
 - Carlos Eduardo Batista de Souza - RM 360902
+- Gabriel Piva Pereira - RM 361733
 
 ## 🙏 Agradecimentos
 
