@@ -19,6 +19,10 @@ type TransactionContextType = {
   fetchCategories: () => Promise<void>;
   categories: TransactionCategory[];
   createTransaction: (transaction: CreateTransactionProps) => Promise<any[]>;
+  updateTransaction: (
+    transactionId: number,
+    transaction: CreateTransactionProps
+  ) => Promise<void>;
   fetchTransactions: (filters?: TransactionFilters) => Promise<any[]>;
   calculateTotalTransactions: (filters?: TransactionFilters) => Promise<void>;
   totalTransactions: TotalAmountTransactions;
@@ -197,6 +201,33 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     setTotalTransactions(totals);
   };
 
+  const updateTransaction = async (
+    transactionId: number,
+    transaction: CreateTransactionProps
+  ) => {
+    const valueInCents = Math.round(transaction.value * 100);
+
+    const updatedTransaction = {
+      type_id: transaction.type_id,
+      category_id: transaction.category_id,
+      value: valueInCents,
+      description: transaction.description,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from("transactions")
+      .update(updatedTransaction)
+      .eq("id", transactionId);
+
+    if (error) {
+      console.error("Erro ao atualizar transação:", error);
+      throw error;
+    }
+
+    await fetchTransactions();
+  };
+
   const deleteTransaction = async (transactionId: number) => {
     const { error } = await supabase
       .from("transactions")
@@ -207,7 +238,6 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       throw error;
     }
 
-    // Atualizar a lista de transações após deletar
     await fetchTransactions();
   };
 
@@ -217,6 +247,7 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
         categories,
         fetchCategories,
         createTransaction,
+        updateTransaction,
         fetchTransactions,
         calculateTotalTransactions,
         totalTransactions,
