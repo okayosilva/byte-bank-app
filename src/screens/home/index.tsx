@@ -2,15 +2,20 @@ import { AnimatedView } from "@/components/animatedView";
 import { useSnackbarContext } from "@/context/snackbar.context";
 import { useTransactionContext } from "@/context/transaction.context";
 import { useAnimatedView } from "@/utils/hooks/useAnimatedView";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ListHeader } from "./list/listHeader";
+import { TransactionListCard } from "./transactionCardList";
 
 export const Home = () => {
   const { fadeAnim, fadeIn } = useAnimatedView();
-  const { fetchCategories, fetchTransactions, totalTransactions } =
-    useTransactionContext();
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const {
+    fetchCategories,
+    fetchTransactions,
+    totalTransactions,
+    transactions,
+  } = useTransactionContext();
 
   useEffect(() => {
     fadeIn();
@@ -32,8 +37,7 @@ export const Home = () => {
 
   const handleFetchTransactions = async () => {
     try {
-      const data = await fetchTransactions();
-      setTransactions(data);
+      await fetchTransactions();
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
       notify({
@@ -52,7 +56,14 @@ export const Home = () => {
   return (
     <SafeAreaView className="flex-1 ">
       <AnimatedView fadeAnim={fadeAnim}>
-        <ListHeader totalTransactions={totalTransactions} />
+        <FlatList
+          data={transactions}
+          ListHeaderComponent={() => (
+            <ListHeader totalTransactions={totalTransactions} />
+          )}
+          keyExtractor={({ id }) => `transaction-${id}`}
+          renderItem={({ item }) => <TransactionListCard transaction={item} />}
+        />
       </AnimatedView>
     </SafeAreaView>
   );

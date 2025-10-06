@@ -27,19 +27,12 @@ type Transaction = {
   id: number;
   value: number;
   description: string;
-  categoryId: number;
-  typeId: number;
-  type: {
-    id: number;
-    name: string;
-  };
-  category: {
-    id: number;
-    name: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string;
+  category_id: number;
+  type_id: number;
+  user_id: string;
+  created_at: string;
+  updated_at: string | null;
+  deleted_at: string | null;
 };
 
 type TransactionTypes = "income" | "expense";
@@ -48,7 +41,6 @@ type TotalAmountTransactions = {
   income: number;
   expense: number;
 };
-
 
 export type {
   CreateTransactionProps,

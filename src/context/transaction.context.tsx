@@ -22,6 +22,8 @@ type TransactionContextType = {
   fetchTransactions: (filters?: TransactionFilters) => Promise<any[]>;
   calculateTotalTransactions: (filters?: TransactionFilters) => Promise<void>;
   totalTransactions: TotalAmountTransactions;
+  transactions: Transaction[];
+  deleteTransaction: (transactionId: number) => Promise<void>;
 };
 
 export const TransactionContext = createContext({} as TransactionContextType);
@@ -78,6 +80,9 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       throw error;
     }
 
+    // Atualizar a lista de transações após criar uma nova
+    await fetchTransactions();
+
     return data;
   };
 
@@ -121,6 +126,8 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       const from = page * perPage;
       const to = from + perPage - 1;
       query = query.range(from, to);
+
+      query = query.order("created_at", { ascending: false });
 
       const { data, error } = await query;
       setTransactions(data || []);
@@ -190,6 +197,20 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     setTotalTransactions(totals);
   };
 
+  const deleteTransaction = async (transactionId: number) => {
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", transactionId);
+
+    if (error) {
+      throw error;
+    }
+
+    // Atualizar a lista de transações após deletar
+    await fetchTransactions();
+  };
+
   return (
     <TransactionContext.Provider
       value={{
@@ -199,6 +220,8 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
         fetchTransactions,
         calculateTotalTransactions,
         totalTransactions,
+        transactions,
+        deleteTransaction,
       }}
     >
       {children}

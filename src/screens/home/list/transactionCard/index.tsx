@@ -1,27 +1,28 @@
+import { useTransactionContext } from "@/context/transaction.context";
 import { colors } from "@/theme/colors";
-import { TransactionTypes } from "@/types/transactions";
+import { TransactionTypeNumber } from "@/types/enum";
 import { MaterialIcons } from "@expo/vector-icons";
-import clsx from "clsx";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { FC } from "react";
 import { Text, View } from "react-native";
 
-type TransactionCardType = TransactionTypes | "total";
-
-interface TransactionCardProps {
-  type: TransactionCardType | "total";
+export type TransactionCardType = TransactionTypeNumber | "total";
+interface Props {
+  type: TransactionCardType;
   amount: number;
 }
-
 interface IconsData {
   name: keyof typeof MaterialIcons.glyphMap;
   color: string;
 }
 
 const ICONS: Record<TransactionCardType, IconsData> = {
-  income: {
+  [TransactionTypeNumber.income]: {
     name: "trending-up",
     color: colors["accent-brand-light"],
   },
-  expense: {
+  [TransactionTypeNumber.expense]: {
     name: "trending-down",
     color: colors["accent-red"],
   },
@@ -37,11 +38,11 @@ interface CardData {
 }
 
 const CARD_DATA: Record<TransactionCardType, CardData> = {
-  income: {
+  [TransactionTypeNumber.income]: {
     label: "Entradas",
     bgColor: "bg-accent-brand/10",
   },
-  expense: {
+  [TransactionTypeNumber.expense]: {
     label: "Saídas",
     bgColor: "bg-accent-red/10",
   },
@@ -51,19 +52,26 @@ const CARD_DATA: Record<TransactionCardType, CardData> = {
   },
 };
 
-export const TransactionCard = ({ type, amount }: TransactionCardProps) => {
+export const TransactionCard: FC<Props> = ({ type, amount }) => {
   const iconData = ICONS[type];
   const cardData = CARD_DATA[type];
+
+  const { transactions } = useTransactionContext();
+
+  const lastTransaction = transactions
+    .filter((transaction) => transaction.type_id === type)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
   return (
     <View className="mr-2">
-      <View className={`w-[143] h-[74] rounded-md bg-white shadow-lg`}>
-        <View className="flex-row items-center justify-between py-2 px-3">
+      <View className={`w-[180] h-[100] rounded-md bg-white shadow-lg py-2`}>
+        <View className="flex-row items-center justify-between pb-2 px-3">
           <Text>{cardData.label}</Text>
           <View
-            className={clsx(
-              "w-7 h-7 items-center justify-center rounded-full",
-              cardData.bgColor
-            )}
+            className={`w-7 h-7 items-center justify-center rounded-full ${cardData.bgColor}`}
           >
             <MaterialIcons
               name={iconData.name}
@@ -73,12 +81,23 @@ export const TransactionCard = ({ type, amount }: TransactionCardProps) => {
           </View>
         </View>
 
-        <View className="flex-row items-center justify-between px-3 py-2">
-          <Text className="text-slate-900 text-sm font-medium">
+        <View className=" px-3 py">
+          <Text className="text-slate-900 text-xl font-medium">
             {amount.toLocaleString("pt-BR", {
               style: "currency",
               currency: "BRL",
             })}
+          </Text>
+
+          <Text className="text-gray-800 text-[12px] font-regular mt-2">
+            {lastTransaction?.created_at &&
+              format(
+                new Date(lastTransaction.created_at),
+                `'Últimas ${cardData.label.toLowerCase()} em' dd MMM '`,
+                {
+                  locale: ptBR,
+                }
+              )}
           </Text>
         </View>
       </View>

@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/appHeader";
 import { TotalAmountTransactions } from "@/types/transactions";
 import { ScrollView, View } from "react-native";
 import { TransactionCard } from "./transactionCard";
+import { TransactionType, TransactionTypeNumber } from "@/types/enum";
 
 interface ListHeaderProps {
   totalTransactions: TotalAmountTransactions;
@@ -20,8 +21,8 @@ export const ListHeader = ({ totalTransactions }: ListHeaderProps) => {
             paddingRight: 10,
           }}
         >
-          <TransactionCard type="income" amount={totalTransactions.income} />
-          <TransactionCard type="expense" amount={totalTransactions.expense} />
+          <TransactionCard type={TransactionTypeNumber.income} amount={totalTransactions.income} />
+          <TransactionCard type={TransactionTypeNumber.expense} amount={totalTransactions.expense} />
           <TransactionCard type="total" amount={totalTransactions.total} />
         </ScrollView>
       </View>
