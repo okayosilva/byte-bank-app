@@ -1,38 +1,22 @@
 import { AnimatedView } from "@/components/animatedView";
-import { AppHeader } from "@/components/appHeader";
-import { useAuthContext } from "@/context/auth.context";
 import { useSnackbarContext } from "@/context/snackbar.context";
 import { useTransactionContext } from "@/context/transaction.context";
 import { useAnimatedView } from "@/utils/hooks/useAnimatedView";
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ListHeader } from "./list/listHeader";
 
 export const Home = () => {
   const { fadeAnim, fadeIn } = useAnimatedView();
-  const { fetchCategories } = useTransactionContext();
+  const { fetchCategories, fetchTransactions, totalTransactions } =
+    useTransactionContext();
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
     fadeIn();
   }, []);
 
-  const { user, handleLogout } = useAuthContext();
   const { notify } = useSnackbarContext();
-
-  const handleLogoutPress = async () => {
-    try {
-      await handleLogout();
-      notify({
-        message: "Logout realizado com sucesso!",
-        type: "SUCCESS",
-      });
-    } catch (error) {
-      console.error("Erro no logout:", error);
-      notify({
-        message: "Erro ao fazer logout",
-        type: "ERROR",
-      });
-    }
-  };
 
   const handleFetchCategories = async () => {
     try {
@@ -46,16 +30,29 @@ export const Home = () => {
     }
   };
 
+  const handleFetchTransactions = async () => {
+    try {
+      const data = await fetchTransactions();
+      setTransactions(data);
+    } catch (error) {
+      console.error("Erro ao buscar transações:", error);
+      notify({
+        message: "Erro ao buscar transações",
+        type: "ERROR",
+      });
+    }
+  };
+
   useEffect(() => {
     (async () => {
-      await handleFetchCategories();
+      await Promise.all([handleFetchCategories(), handleFetchTransactions()]);
     })();
   }, []);
 
   return (
     <SafeAreaView className="flex-1 ">
       <AnimatedView fadeAnim={fadeAnim}>
-        <AppHeader />
+        <ListHeader totalTransactions={totalTransactions} />
       </AnimatedView>
     </SafeAreaView>
   );

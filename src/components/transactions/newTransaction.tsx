@@ -1,6 +1,6 @@
 import { useBottomSheetContext } from "@/context/bottomSheet.context";
 import { colors } from "@/theme/colors";
-import { CreateTransactionProps } from "@/types/transactions";
+import { CreateTransactionProps, TransactionTypes } from "@/types/transactions";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
@@ -20,8 +20,8 @@ import { ErrorMessage } from "./errorMessage";
 import { SelectModalCategory } from "./modal/selectModalCategory";
 import { newTransitionSchema } from "./schema/newTransition-schema";
 
-type NewTransactionProps = {
-  transactionType: "income" | "expense";
+export type NewTransactionProps = {
+  transactionType: TransactionTypes;
 };
 
 type validationErrors = Record<keyof CreateTransactionProps, string>;

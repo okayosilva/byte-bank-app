@@ -4,11 +4,12 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
 import { ButtonIconSelect } from "./buttonIconSelect";
 import { NewTransaction } from "./newTransaction";
+import { TransactionTypes } from "@/types/transactions";
 
 export const SelectTransaction = () => {
   const { closeBottomSheet, openBottomSheet } = useBottomSheetContext();
 
-  const handleTransactionType = (type: "income" | "expense") => {
+  const handleTransactionType = (type: TransactionTypes) => {
     openBottomSheet(<NewTransaction transactionType={type} />, 1);
   };
 
