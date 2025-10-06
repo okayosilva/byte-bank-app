@@ -757,62 +757,7 @@ O aplicativo utiliza uma paleta de cores moderna e acessível:
 
 ## 📹 Vídeo Demonstrativo
 
-Como parte da entrega do Tech Challenge, incluímos um vídeo demonstrativo de até 5 minutos mostrando:
-
-### 🎬 Conteúdo do Vídeo
-
-1. **Autenticação** (0:00 - 0:45)
-   - Tela de login
-   - Processo de cadastro
-   - Validação de email
-   - Fluxo de autenticação com Supabase
-
-2. **Adicionar Transações** (0:45 - 1:30)
-   - Abertura do formulário de nova transação
-   - Preenchimento dos campos (tipo, categoria, valor, descrição)
-   - Upload de comprovante (imagem)
-   - Salvamento no Supabase
-   - Feedback de sucesso
-
-3. **Editar Transações** (1:30 - 2:15)
-   - Swipe para esquerda em uma transação
-   - Formulário de edição pré-preenchido
-   - Alteração de valores
-   - Substituição de comprovante
-   - Atualização no banco de dados
-
-4. **Visualizar e Filtrar Transações** (2:15 - 3:15)
-   - Lista de transações com scroll infinito
-   - Busca por texto
-   - Aplicação de filtros avançados:
-     - Filtro por categoria
-     - Filtro por tipo (receita/despesa)
-     - Filtro por período de datas
-   - Pull to refresh
-   - Visualização de comprovantes anexados
-
-5. **Dashboard e Gráficos** (3:15 - 4:15)
-   - Navegação para o dashboard
-   - Cards de resumo (receitas, despesas, saldo)
-   - Gráfico de evolução dos últimos 6 meses
-   - Gráfico de pizza por categoria
-   - Estatísticas gerais
-
-6. **Integração com Supabase** (4:15 - 5:00)
-   - Demonstração do banco de dados no painel Supabase
-   - Visualização de transações salvas
-   - Comprovantes no Supabase Storage
-   - Políticas de segurança (RLS) em ação
-   - Logout e persistência de sessão
-
-### 📝 Observações sobre o Vídeo
-
-- ✅ Duração: Máximo de 5 minutos
-- ✅ Demonstra todas as funcionalidades principais
-- ✅ Mostra a integração com Supabase (substituindo Firebase)
-- ✅ Evidencia validações e tratamento de erros
-- ✅ Apresenta a performance e animações
-- ✅ Qualidade de áudio e vídeo adequada
+Como parte da entrega do Tech Challenge, incluímos um vídeo demonstrativo de até 5 minutos.
 
 ### 🎥 Link do Vídeo
 
@@ -834,14 +779,10 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👨‍💻 Equipe
 
-Desenvolvido como parte do **Tech Challenge - FIAP** | Fase [X] - [Ano]
-
 **Integrantes:**
 
-- [Nome do Integrante 1] - RM XXXXX
-- [Nome do Integrante 2] - RM XXXXX
-- [Nome do Integrante 3] - RM XXXXX
-- [Nome do Integrante 4] - RM XXXXX
+- Kayo Henrique da Silva Pinto - RM 362479
+- Carlos Eduardo Batista de Souza - RM 360902
 
 ## 🙏 Agradecimentos
 
@@ -870,7 +811,6 @@ Desenvolvido como parte do **Tech Challenge - FIAP** | Fase [X] - [Ano]
 
 Este projeto foi desenvolvido como atividade obrigatória do **Tech Challenge da FIAP**, que engloba conhecimentos de todas as disciplinas da fase e vale **90% da nota** de todas as disciplinas.
 
-**Autorização e Diretrizes:** [@Discord - Tech Challenge](https://discord.com/channels/1255291574045376644/1405341177435259023)
 
 ### Decisão Técnica: Supabase vs Firebase
 
