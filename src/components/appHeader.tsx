@@ -2,12 +2,20 @@ import { Image, Text, View } from "react-native";
 
 import { useAuthContext } from "@/context/auth.context";
 import { useBottomSheetContext } from "@/context/bottomSheet.context";
+import { useState } from "react";
 import { ButtonCircle } from "./buttonCircle";
+import { ConfirmationModal } from "./confirmationModal";
 import { SelectTransaction } from "./transactions/selectTransaction";
 
 export const AppHeader = ({ amount }: { amount: number }) => {
   const { user, handleLogout } = useAuthContext();
   const { openBottomSheet } = useBottomSheetContext();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutModal(false);
+    await handleLogout();
+  };
 
   return (
     <View className="px-6 pt-6 ">
@@ -17,11 +25,32 @@ export const AppHeader = ({ amount }: { amount: number }) => {
           className="w-[148px] h-[33px]"
         />
 
-        <ButtonCircle
-          iconName="add"
-          onPress={() => openBottomSheet(<SelectTransaction />, 0)}
-        />
+        <View className="flex-row items-center gap-4">
+          <ButtonCircle
+            iconName="logout"
+            className="bg-gray-600"
+            onPress={() => setShowLogoutModal(true)}
+          />
+          <ButtonCircle
+            iconName="add"
+            className="bg-accent-brand-background-primary"
+            onPress={() => openBottomSheet(<SelectTransaction />, 0)}
+          />
+        </View>
       </View>
+
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="Sair da conta"
+        message="Tem certeza que deseja sair? Você precisará fazer login novamente para acessar sua conta."
+        confirmText="Sair"
+        cancelText="Cancelar"
+        iconName="logout"
+        iconColor="#6b7280"
+        confirmButtonColor="#ef4444"
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setShowLogoutModal(false)}
+      />
 
       <View className="mt-4">
         <Text className="text-gray-800 text-base font-medium">

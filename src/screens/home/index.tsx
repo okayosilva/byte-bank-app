@@ -173,6 +173,7 @@ export const Home = () => {
           renderItem={renderItem}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
+          contentContainerStyle={{ paddingBottom: 80 }}
           ListFooterComponent={
             isLoadingMore ? (
               <View className="py-4">

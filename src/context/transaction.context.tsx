@@ -27,6 +27,7 @@ type TransactionContextType = {
     filters?: TransactionFilters,
     append?: boolean
   ) => Promise<any[]>;
+  fetchAllTransactions: () => Promise<Transaction[]>;
   calculateTotalTransactions: () => Promise<void>;
   totalTransactions: TotalAmountTransactions;
   transactions: Transaction[];
@@ -162,6 +163,19 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     []
   );
 
+  const fetchAllTransactions = async (): Promise<Transaction[]> => {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  };
+
   const calculateTotalTransactions = async () => {
     // Sempre busca todos os dados para calcular os totais gerais
     const query = supabase.from("transactions").select("*");
@@ -247,6 +261,7 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
         createTransaction,
         updateTransaction,
         fetchTransactions,
+        fetchAllTransactions,
         calculateTotalTransactions,
         totalTransactions,
         transactions,
