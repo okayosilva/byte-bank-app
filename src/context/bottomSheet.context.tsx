@@ -80,10 +80,14 @@ export const BottomSheetContextProvider: FC<PropsWithChildren> = ({
         snapPoints={snapPoints}
         enablePanDownToClose
         backgroundStyle={{
-          backgroundColor: colors["background-primary"],
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           elevation: 4,
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: colors.gray[400],
+          width: 40,
+          height: 4,
         }}
       >
         <BottomSheetScrollView>{content}</BottomSheetScrollView>

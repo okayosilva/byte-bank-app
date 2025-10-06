@@ -5,7 +5,7 @@ import { useBottomSheetContext } from "@/context/bottomSheet.context";
 import { ButtonCircle } from "./buttonCircle";
 import { SelectTransaction } from "./transactions/selectTransaction";
 
-export const AppHeader = ({amount}: {amount: number}) => {
+export const AppHeader = ({ amount }: { amount: number }) => {
   const { user, handleLogout } = useAuthContext();
   const { openBottomSheet } = useBottomSheetContext();
 
@@ -30,7 +30,7 @@ export const AppHeader = ({amount}: {amount: number}) => {
 
         <View className="mt-3">
           <Text className="text-background-tertiary text-3xl font-bold">
-            R$ {amount.toLocaleString("pt-BR", {
+            {amount.toLocaleString("pt-BR", {
               style: "currency",
               currency: "BRL",
             })}
