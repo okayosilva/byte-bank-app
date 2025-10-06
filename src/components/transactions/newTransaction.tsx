@@ -16,6 +16,7 @@ import { Button } from "../button";
 
 import { useSnackbarContext } from "@/context/snackbar.context";
 import { useTransactionContext } from "@/context/transaction.context";
+import { ReceiptPicker } from "../receiptPicker";
 import { ErrorMessage } from "./errorMessage";
 import { SelectModalCategory } from "./modal/selectModalCategory";
 import { newTransitionSchema } from "./schema/newTransition-schema";
@@ -32,13 +33,14 @@ export const NewTransaction = ({ transactionType }: NewTransactionProps) => {
     category_id: 0,
     value: 0,
     description: "",
+    receipt_url: undefined,
   });
   const [errors, setErrors] = useState<validationErrors>();
   const [isLoading, setIsLoading] = useState(false);
 
   const setTransactionData = (
     key: keyof CreateTransactionProps,
-    value: string | number
+    value: string | number | undefined
   ) => {
     setTransaction((prevData) => ({
       ...prevData,
@@ -166,6 +168,18 @@ export const NewTransaction = ({ transactionType }: NewTransactionProps) => {
               className="rounded-lg border w-full bg-white flex-row items-center justify-between px-3 border-border-input h-12"
             />
             {errors?.value && <ErrorMessage error={errors.value} />}
+          </View>
+
+          <View className="w-full">
+            <ReceiptPicker
+              receiptUrl={transaction.receipt_url}
+              onReceiptSelected={(uri) =>
+                setTransactionData("receipt_url", uri)
+              }
+              onReceiptRemoved={() =>
+                setTransactionData("receipt_url", undefined)
+              }
+            />
           </View>
 
           <View className="mt-6">

@@ -14,6 +14,7 @@ import {
 import CurrencyInput from "react-native-currency-input";
 import * as Yup from "yup";
 
+import { ReceiptPicker } from "@/components/receiptPicker";
 import { ErrorMessage } from "@/components/transactions/errorMessage";
 import { SelectModalCategory } from "@/components/transactions/modal/selectModalCategory";
 import { newTransitionSchema } from "@/components/transactions/schema/newTransition-schema";
@@ -35,6 +36,7 @@ export const EditTransactionForm = ({
     category_id: existingTransaction.category_id,
     value: existingTransaction.value / 100, // Converter de cents para reais
     description: existingTransaction.description,
+    receipt_url: existingTransaction.receipt_url || undefined,
   });
   const [errors, setErrors] = useState<validationErrors>();
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +44,7 @@ export const EditTransactionForm = ({
 
   const setTransactionData = (
     key: keyof CreateTransactionProps,
-    value: string | number
+    value: string | number | undefined
   ) => {
     setTransaction((prevData) => ({
       ...prevData,
@@ -192,6 +194,18 @@ export const EditTransactionForm = ({
               className="rounded-lg border w-full bg-white flex-row items-center justify-between px-3 border-border-input h-12"
             />
             {errors?.value && <ErrorMessage error={errors.value} />}
+          </View>
+
+          <View className="w-full">
+            <ReceiptPicker
+              receiptUrl={transaction.receipt_url}
+              onReceiptSelected={(uri) =>
+                setTransactionData("receipt_url", uri)
+              }
+              onReceiptRemoved={() =>
+                setTransactionData("receipt_url", undefined)
+              }
+            />
           </View>
 
           <View className="mt-6">

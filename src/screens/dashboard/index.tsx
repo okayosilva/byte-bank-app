@@ -207,7 +207,10 @@ export const Dashboard = () => {
                     />
                     <Text className="text-white text-sm mt-2">Receitas</Text>
                     <Text className="text-white text-xl font-bold mt-1">
-                      R$ {totalTransactions.income.toFixed(2)}
+                      {totalTransactions.income.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                     </Text>
                   </View>
 
@@ -222,7 +225,10 @@ export const Dashboard = () => {
                     />
                     <Text className="text-white text-sm mt-2">Despesas</Text>
                     <Text className="text-white text-xl font-bold mt-1">
-                      R$ {totalTransactions.expense.toFixed(2)}
+                      {totalTransactions.expense.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                     </Text>
                   </View>
                 </View>
@@ -238,7 +244,10 @@ export const Dashboard = () => {
                   />
                   <Text className="text-white text-sm mt-2">Saldo</Text>
                   <Text className="text-white text-2xl font-bold mt-1">
-                    R$ {totalTransactions.total.toFixed(2)}
+                    {totalTransactions.total.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </Text>
                 </View>
               </View>
@@ -333,27 +342,31 @@ export const Dashboard = () => {
                   <View className="flex-row justify-between items-center py-2 border-b border-gray-200">
                     <Text className="text-gray-700">Média de despesas</Text>
                     <Text className="text-background-secondary font-semibold">
-                      R${" "}
                       {allTransactions.filter((t) => t.type_id === 2).length > 0
                         ? (
                             totalTransactions.expense /
                             allTransactions.filter((t) => t.type_id === 2)
                               .length
-                          ).toFixed(2)
-                        : "0.00"}
+                          ).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })
+                        : "R$ 0,00"}
                     </Text>
                   </View>
                   <View className="flex-row justify-between items-center py-2">
                     <Text className="text-gray-700">Média de receitas</Text>
                     <Text className="text-background-secondary font-semibold">
-                      R${" "}
                       {allTransactions.filter((t) => t.type_id === 1).length > 0
                         ? (
                             totalTransactions.income /
                             allTransactions.filter((t) => t.type_id === 1)
                               .length
-                          ).toFixed(2)
-                        : "0.00"}
+                          ).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })
+                        : "R$ 0,00"}
                     </Text>
                   </View>
                 </View>

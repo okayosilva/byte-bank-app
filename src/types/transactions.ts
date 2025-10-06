@@ -3,6 +3,7 @@ type CreateTransactionProps = {
   category_id: number;
   value: number;
   description: string;
+  receipt_url?: string;
   user_id?: string;
   created_at?: string;
 };
@@ -30,6 +31,7 @@ type Transaction = {
   category_id: number;
   type_id: number;
   user_id: string;
+  receipt_url: string | null;
   created_at: string;
   updated_at: string | null;
   deleted_at: string | null;
