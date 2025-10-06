@@ -8,6 +8,7 @@ type ButtonProps = TouchableOpacityProps & {
 export const Button = ({ children, className, ...rest }: ButtonProps) => {
   return (
     <TouchableOpacity
+      activeOpacity={0.7}
       className={clsx(
         "bg-accent-brand-background-primary rounded-lg h-button w-full flex-row items-center justify-center",
         className

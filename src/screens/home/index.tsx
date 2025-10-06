@@ -2,12 +2,14 @@ import { AnimatedView } from "@/components/animatedView";
 import { AppHeader } from "@/components/appHeader";
 import { useAuthContext } from "@/context/auth.context";
 import { useSnackbarContext } from "@/context/snackbar.context";
+import { useTransactionContext } from "@/context/transaction.context";
 import { useAnimatedView } from "@/utils/hooks/useAnimatedView";
 import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export const Home = () => {
   const { fadeAnim, fadeIn } = useAnimatedView();
+  const { fetchCategories } = useTransactionContext();
 
   useEffect(() => {
     fadeIn();
@@ -31,6 +33,24 @@ export const Home = () => {
       });
     }
   };
+
+  const handleFetchCategories = async () => {
+    try {
+      await fetchCategories();
+    } catch (error) {
+      console.error("Erro ao buscar categorias:", error);
+      notify({
+        message: "Erro ao buscar categorias",
+        type: "ERROR",
+      });
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      await handleFetchCategories();
+    })();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 ">

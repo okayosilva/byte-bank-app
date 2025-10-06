@@ -1,55 +1,107 @@
 import { useBottomSheetContext } from "@/context/bottomSheet.context";
 import { colors } from "@/theme/colors";
+import { CreateTransactionProps } from "@/types/transactions";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import CurrencyInput from "react-native-currency-input";
+import * as Yup from "yup";
 import { Button } from "../button";
-import { Input } from "../input";
+
+import { useSnackbarContext } from "@/context/snackbar.context";
+import { useTransactionContext } from "@/context/transaction.context";
+import { ErrorMessage } from "./errorMessage";
+import { SelectModalCategory } from "./modal/selectModalCategory";
+import { newTransitionSchema } from "./schema/newTransition-schema";
 
 type NewTransactionProps = {
   transactionType: "income" | "expense";
 };
 
-type TransactionFormData = {
-  amount: string;
-  description: string;
-  category: string;
-  date: string;
-};
-
-type TabType = "form" | "categories";
+type validationErrors = Record<keyof CreateTransactionProps, string>;
 
 export const NewTransaction = ({ transactionType }: NewTransactionProps) => {
-  const { closeBottomSheet, openBottomSheet } = useBottomSheetContext();
-  const [activeTab, setActiveTab] = useState<TabType>("form");
-
-  const formatDateToBrazilian = (date: Date) => {
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const { control, handleSubmit, watch } = useForm<TransactionFormData>({
-    defaultValues: {
-      amount: "",
-      description: "",
-      category: "",
-      date: formatDateToBrazilian(new Date()),
-    },
+  const [transaction, setTransaction] = useState<CreateTransactionProps>({
+    type_id: 0,
+    category_id: 0,
+    value: 0,
+    description: "",
   });
+  const [errors, setErrors] = useState<validationErrors>();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = (data: TransactionFormData) => {
-    console.log("Transaction data:", { ...data, type: transactionType });
-    closeBottomSheet();
+  const setTransactionData = (
+    key: keyof CreateTransactionProps,
+    value: string | number
+  ) => {
+    setTransaction((prevData) => ({
+      ...prevData,
+      [key]: value,
+    }));
   };
+
+  const { notify } = useSnackbarContext();
+  const { closeBottomSheet } = useBottomSheetContext();
+  const { createTransaction } = useTransactionContext();
+
   const isIncome = transactionType === "income";
   const typeTitle = isIncome ? "Nova Entrada" : "Nova Saída";
 
   const handleGoBack = () => {
     closeBottomSheet();
   };
+
+  const handleCreateTransaction = async () => {
+    try {
+      setIsLoading(true);
+      setErrors(undefined); // Limpar erros anteriores
+
+      // Validar dados
+      await newTransitionSchema.validate(transaction, {
+        abortEarly: false,
+      });
+
+      // Criar transação
+      await createTransaction(transaction);
+
+      closeBottomSheet();
+      notify({ message: "Transação criada com sucesso!", type: "SUCCESS" });
+    } catch (error) {
+      if (error instanceof Yup.ValidationError) {
+        const errors = {} as validationErrors;
+
+        error.inner.forEach((err) => {
+          if (err.path) {
+            errors[err.path as keyof CreateTransactionProps] = err.message;
+          }
+        });
+
+        notify({ message: "Erro de validação!", type: "ERROR" });
+        setErrors(errors);
+      } else {
+        // Erro do Supabase ou outros erros
+        const errorMessage =
+          error instanceof Error ? error.message : "Erro desconhecido";
+        notify({
+          message: `Erro ao criar transação: ${errorMessage}`,
+          type: "ERROR",
+        });
+        console.error("Erro ao criar transação:", error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setTransactionData("type_id", transactionType === "income" ? 1 : 2);
+  }, []);
 
   return (
     <View className="flex-1">
@@ -75,133 +127,59 @@ export const NewTransaction = ({ transactionType }: NewTransactionProps) => {
         <View className="mt-4 border-b-2 border-gray-400"></View>
       </View>
 
-      {/* Tab Bar */}
-      <View className="px-6">
-        <View className="flex-row bg-gray-100 rounded-lg p-1">
-          <TouchableOpacity
-            className={`flex-1 py-2 rounded-md ${
-              activeTab === "form" ? "bg-white shadow-sm" : ""
-            }`}
-            onPress={() => setActiveTab("form")}
-          >
-            <Text
-              className={`text-center font-medium ${
-                activeTab === "form" ? "text-slate-900" : "text-gray-600"
-              }`}
-            >
-              Formulário
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-2 rounded-md ${
-              activeTab === "categories" ? "bg-white shadow-sm" : ""
-            }`}
-            onPress={() => setActiveTab("categories")}
-          >
-            <Text
-              className={`text-center font-medium ${
-                activeTab === "categories" ? "text-slate-900" : "text-gray-600"
-              }`}
-            >
-              Categorias
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <View className="flex-1 px-6 pt-6">
-        {activeTab === "form" ? (
-          <View className="gap-4">
-            <Input
-              control={control}
-              name="amount"
-              label="Valor"
-              placeholder="0,00"
+        <View className="gap-4">
+          <View className="w-full">
+            <Text className="text-sm font-medium mb-2">Descrição</Text>
+            <TextInput
+              onChangeText={(text) => setTransactionData("description", text)}
+              placeholder="Descrição"
+              placeholderTextColor={colors.gray[700]}
+              value={transaction.description}
+              className="rounded-lg border w-full bg-white flex-row items-center justify-between px-3 border-border-input h-12"
+            />
+            {errors?.description && <ErrorMessage error={errors.description} />}
+          </View>
+
+          <View className="w-full">
+            <SelectModalCategory
+              selectedCategoryId={transaction.category_id}
+              onSelectCategory={(categoryId) =>
+                setTransactionData("category_id", categoryId)
+              }
+            />
+            {errors?.category_id && <ErrorMessage error={errors.category_id} />}
+          </View>
+
+          <View className="w-full">
+            <Text className="text-sm font-medium mb-2">Valor</Text>
+            <CurrencyInput
+              prefix="R$"
+              separator=","
+              delimiter="."
+              minValue={0}
+              precision={2}
+              value={transaction.value}
+              onChangeValue={(value) => setTransactionData("value", value ?? 0)}
+              placeholder="0"
               keyboardType="numeric"
+              className="rounded-lg border w-full bg-white flex-row items-center justify-between px-3 border-border-input h-12"
             />
-            <Input
-              control={control}
-              name="description"
-              label="Descrição"
-              placeholder="Digite uma descrição"
-            />
-            <Input
-              control={control}
-              name="category"
-              label="Categoria"
-              placeholder="Selecione uma categoria"
-            />
-            <Input
-              control={control}
-              name="date"
-              label="Data"
-              placeholder="DD/MM/AAAA"
-            />
-
-            <View className="mt-6">
-              <Button onPress={handleSubmit(onSubmit)}>
-                {isIncome ? "Adicionar Entrada" : "Adicionar Saída"}
-              </Button>
-            </View>
+            {errors?.value && <ErrorMessage error={errors.value} />}
           </View>
-        ) : (
-          <View className="gap-3">
-            <Text className="text-slate-900 text-base font-bold mb-4">
-              Categorias {isIncome ? "de Entrada" : "de Saída"}
-            </Text>
 
-            {isIncome ? (
-              <View className="gap-3">
-                {[
-                  "Salário",
-                  "Freelance",
-                  "Investimentos",
-                  "Vendas",
-                  "Outros",
-                ].map((category) => (
-                  <TouchableOpacity
-                    key={category}
-                    className="flex-row items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <Text className="text-slate-900 font-medium">
-                      {category}
-                    </Text>
-                    <MaterialIcons
-                      name="chevron-right"
-                      size={24}
-                      color={colors.gray[700]}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ) : (
-              <View className="gap-3">
-                {[
-                  "Alimentação",
-                  "Transporte",
-                  "Lazer",
-                  "Saúde",
-                  "Educação",
-                  "Outros",
-                ].map((category) => (
-                  <TouchableOpacity
-                    key={category}
-                    className="flex-row items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <Text className="text-slate-900 font-medium">
-                      {category}
-                    </Text>
-                    <MaterialIcons
-                      name="chevron-right"
-                      size={24}
-                      color={colors.gray[700]}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+          <View className="mt-6">
+            <Button onPress={handleCreateTransaction}>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : isIncome ? (
+                "Registrar Entrada"
+              ) : (
+                "Registrar Saída"
+              )}
+            </Button>
           </View>
-        )}
+        </View>
       </View>
     </View>
   );

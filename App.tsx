@@ -4,6 +4,7 @@ import "react-native-url-polyfill/auto";
 
 import { BottomSheetContextProvider } from "@/context/bottomSheet.context";
 import { SnackbarContextProvider } from "@/context/snackbar.context";
+import { TransactionContextProvider } from "@/context/transaction.context";
 import "@/styles/global.css";
 import "@/utils/reanimated.config";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -13,9 +14,11 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SnackbarContextProvider>
         <AuthContextProvider>
-          <BottomSheetContextProvider>
-            <Router />
-          </BottomSheetContextProvider>
+          <TransactionContextProvider>
+            <BottomSheetContextProvider>
+              <Router />
+            </BottomSheetContextProvider>
+          </TransactionContextProvider>
         </AuthContextProvider>
       </SnackbarContextProvider>
     </GestureHandlerRootView>
