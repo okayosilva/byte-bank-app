@@ -9,7 +9,7 @@ import { CheckboxComponent } from "./checkbox";
 import { DateInput } from "./dateInput";
 
 interface FilterTransactionsProps {
-  onFilterApplied?: (hasFilters: boolean) => void;
+  onFilterApplied?: (hasFilters: boolean, filters?: any) => void;
   onClearSearch?: () => void;
 }
 
@@ -44,8 +44,8 @@ export const FilterTransactions = ({
     setSelectedType(undefined);
 
     try {
-      await fetchTransactions();
-      onFilterApplied?.(false);
+      await fetchTransactions({ page: 0 }, false);
+      onFilterApplied?.(false, undefined);
       onClearSearch?.(); // Limpar o campo de busca
       closeBottomSheet();
     } catch (error) {
@@ -54,7 +54,7 @@ export const FilterTransactions = ({
   };
 
   const handleApplyFilters = async () => {
-    const filters: TransactionFilters = {};
+    const filters: TransactionFilters = { page: 0 };
     let hasFilters = false;
 
     if (fromDate) {
@@ -78,8 +78,8 @@ export const FilterTransactions = ({
     }
 
     try {
-      await fetchTransactions(hasFilters ? filters : undefined);
-      onFilterApplied?.(hasFilters);
+      await fetchTransactions(filters, false);
+      onFilterApplied?.(hasFilters, hasFilters ? filters : undefined);
       closeBottomSheet();
     } catch (error) {
       console.error("Erro ao aplicar filtros:", error);

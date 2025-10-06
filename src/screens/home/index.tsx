@@ -18,10 +18,14 @@ export const Home = () => {
     fetchTransactions,
     totalTransactions,
     transactions,
+    hasMore,
   } = useTransactionContext();
   const { openBottomSheet } = useBottomSheetContext();
   const [searchText, setSearchText] = useState("");
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<any>(undefined);
 
   useEffect(() => {
     fadeIn();
@@ -43,7 +47,7 @@ export const Home = () => {
 
   const handleFetchTransactions = async () => {
     try {
-      await fetchTransactions();
+      await fetchTransactions({ page: 0 }, false);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
       notify({
@@ -61,17 +65,28 @@ export const Home = () => {
 
   const handleClearSearch = useCallback(() => {
     setSearchText("");
+    setCurrentPage(0);
+    setActiveFilters(undefined);
   }, []);
+
+  const handleFilterApplied = useCallback(
+    (hasFilters: boolean, filters?: any) => {
+      setHasActiveFilters(hasFilters);
+      setCurrentPage(0);
+      setActiveFilters(filters);
+    },
+    []
+  );
 
   const handleOpenFilter = useCallback(() => {
     openBottomSheet(
       <FilterTransactions
-        onFilterApplied={setHasActiveFilters}
+        onFilterApplied={handleFilterApplied}
         onClearSearch={handleClearSearch}
       />,
       0
     );
-  }, [openBottomSheet, handleClearSearch]);
+  }, [openBottomSheet, handleClearSearch, handleFilterApplied]);
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchText(text);
@@ -79,15 +94,37 @@ export const Home = () => {
 
   const handleSearch = useCallback(async () => {
     try {
-      if (searchText.trim()) {
-        await fetchTransactions({ searchText: searchText.trim() });
-      } else {
-        await fetchTransactions();
-      }
+      setCurrentPage(0);
+      const filters = searchText.trim()
+        ? { searchText: searchText.trim(), page: 0 }
+        : { page: 0 };
+      setActiveFilters(filters);
+      await fetchTransactions(filters, false);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
     }
   }, [searchText, fetchTransactions]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+
+      const filters = {
+        ...activeFilters,
+        page: nextPage,
+      };
+
+      await fetchTransactions(filters, true);
+    } catch (error) {
+      console.error("Erro ao carregar mais transações:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [currentPage, isLoadingMore, hasMore, activeFilters, fetchTransactions]);
 
   const renderItem = useCallback(
     ({ item }: { item: any }) => <TransactionListCard transaction={item} />,
@@ -134,6 +171,15 @@ export const Home = () => {
           ListHeaderComponent={listHeaderComponent}
           keyExtractor={({ id }) => `transaction-${id}`}
           renderItem={renderItem}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View className="py-4">
+                <Text className="text-center text-gray-600">Carregando...</Text>
+              </View>
+            ) : null
+          }
         />
       </AnimatedView>
     </SafeAreaView>

@@ -23,11 +23,15 @@ type TransactionContextType = {
     transactionId: number,
     transaction: CreateTransactionProps
   ) => Promise<void>;
-  fetchTransactions: (filters?: TransactionFilters) => Promise<any[]>;
+  fetchTransactions: (
+    filters?: TransactionFilters,
+    append?: boolean
+  ) => Promise<any[]>;
   calculateTotalTransactions: () => Promise<void>;
   totalTransactions: TotalAmountTransactions;
   transactions: Transaction[];
   deleteTransaction: (transactionId: number) => Promise<void>;
+  hasMore: boolean;
 };
 
 export const TransactionContext = createContext({} as TransactionContextType);
@@ -37,6 +41,7 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
 }) => {
   const [categories, setCategories] = useState<TransactionCategory[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [hasMore, setHasMore] = useState(true);
   const [totalTransactions, setTotalTransactions] =
     useState<TotalAmountTransactions>({
       total: 0,
@@ -85,13 +90,13 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     }
 
     // Atualizar a lista de transações após criar uma nova
-    await fetchTransactions();
+    await fetchTransactions({ page: 0 }, false);
 
     return data;
   };
 
   const fetchTransactions = useCallback(
-    async (filters?: TransactionFilters) => {
+    async (filters?: TransactionFilters, append: boolean = false) => {
       let query = supabase.from("transactions").select("*");
 
       const defaultPage = 0;
@@ -134,14 +139,23 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       query = query.order("created_at", { ascending: false });
 
       const { data, error } = await query;
-      setTransactions(data || []);
-
-      // Sempre calcular os totais gerais sem aplicar filtros
-      await calculateTotalTransactions();
 
       if (error) {
         throw error;
       }
+
+      // Verificar se tem mais dados
+      setHasMore(data && data.length === perPage);
+
+      // Adicionar ou substituir transações
+      if (append) {
+        setTransactions((prev) => [...prev, ...(data || [])]);
+      } else {
+        setTransactions(data || []);
+      }
+
+      // Sempre calcular os totais gerais sem aplicar filtros
+      await calculateTotalTransactions();
 
       return data;
     },
@@ -209,7 +223,7 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       throw error;
     }
 
-    await fetchTransactions();
+    await fetchTransactions({ page: 0 }, false);
   };
 
   const deleteTransaction = async (transactionId: number) => {
@@ -222,7 +236,7 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       throw error;
     }
 
-    await fetchTransactions();
+    await fetchTransactions({ page: 0 }, false);
   };
 
   return (
@@ -237,6 +251,7 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
         totalTransactions,
         transactions,
         deleteTransaction,
+        hasMore,
       }}
     >
       {children}
