@@ -24,11 +24,14 @@ Um aplicativo mobile moderno de gerenciamento financeiro pessoal desenvolvido co
 
 O **Byte Bank App** é uma solução completa para gerenciamento financeiro pessoal que permite aos usuários:
 
-- Registrar receitas e despesas
-- Categorizar transações
-- Visualizar gráficos e estatísticas
-- Anexar comprovantes às transações
-- Acompanhar evolução financeira ao longo do tempo
+- 💰 Registrar receitas e despesas com categorias personalizadas
+- 📊 Visualizar gráficos e estatísticas interativas
+- 💡 Receber insights financeiros automáticos com comparação de períodos
+- 🔍 Buscar e filtrar transações por ano, categoria e período
+- 📈 Acompanhar evolução financeira com dashboard filtrado por ano
+- 🎯 Onboarding intuitivo na primeira utilização
+- 📎 Anexar comprovantes às transações
+- 📱 Interface moderna com animações fluidas
 
 O aplicativo foi construído com foco em **escalabilidade**, **manutenibilidade** e **experiência do usuário**, utilizando as melhores práticas de desenvolvimento mobile.
 
@@ -293,6 +296,25 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 
 ## ✨ Funcionalidades
 
+### 🎯 Onboarding
+
+- **Primeira Experiência** - Tela de boas-vindas exibida apenas na primeira vez
+- **4 Slides Interativos** - Explicação visual das principais features do app:
+  - 💰 Gerenciamento de Finanças
+  - 💡 Dashboard Inteligente
+  - 🔍 Filtros Avançados
+  - 📊 Busca Anual e Relatórios
+- **Navegação Intuitiva** - Swipe horizontal para navegar entre slides
+- **Controles Flexíveis**:
+  - Botão "Pular" para ir direto ao login
+  - Botão "Voltar" contextual (a partir do 2º slide)
+  - Botão dinâmico ("Próximo" → "Começar")
+- **Paginação Visual** - Indicadores de progresso com bolinhas
+- **Animações Suaves** - AnimatedView com fade in
+- **Persistência Local** - AsyncStorage para salvar que onboarding foi visto
+- **Ícones Coloridos** - Material Icons grandes e visualmente atrativos
+- **Código**: `src/screens/onboarding/index.tsx` e `src/utils/hooks/useOnboarding.tsx`
+
 ### 🔐 Autenticação
 
 - **Cadastro de usuários** com validação de email e senha
@@ -373,17 +395,51 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 
 ### 📊 Dashboard & Estatísticas
 
-- **Saldo total** (receitas - despesas)
-- **Total de receitas** acumuladas
-- **Total de despesas** acumuladas
-- **Gráfico de evolução** dos últimos 6 meses
-  - Linha de receitas
-  - Linha de despesas
-- **Gráfico de pizza** - Despesas por categoria
+- **Filtro de Ano** - Seletor de ano para análise temporal:
+  - Opção "Todos" - Visualiza últimos 6 meses
+  - Anos específicos (2025, 2024, 2023, 2022) - Visualiza 12 meses completos
+  - Totais calculados dinamicamente baseado no ano selecionado
+  - Título do gráfico atualiza automaticamente
+  - **Código**: `src/components/yearSelector.tsx`
+
+- **💡 Insights Financeiros Automáticos** - Análise inteligente comparativa:
+  - **Comparação Mês a Mês** (quando "Todos" selecionado):
+    - Compara mês atual vs mês anterior
+    - Ex: "Janeiro 2025 vs Dezembro 2024"
+  - **Comparação Ano a Ano** (quando ano específico selecionado):
+    - Compara ano selecionado vs ano anterior
+    - Ex: "2024 vs 2023" ou "2023 vs 2022"
+  - **Tipos de Insights**:
+    - ✅ Economia em despesas (redução ≥20%)
+    - ⚠️ Aumento em despesas (aumento ≥20%)
+    - 📈 Aumento em receitas (aumento ≥20%)
+    - 📉 Redução em receitas (redução ≥20%)
+    - 💰 Economia por categoria (mudança ≥30%)
+    - 📊 Aumento por categoria (mudança ≥30%)
+  - **Cards Visuais Horizontais**:
+    - Cores dinâmicas por tipo (verde=sucesso, laranja=atenção, vermelho=perigo)
+    - Badge de porcentagem de variação
+    - Scroll horizontal para múltiplos insights
+    - Título contextual mostrando período de comparação
+  - **Estados**:
+    - Loading durante análise
+    - Sem exibição se não houver insights relevantes
+  - **Query Otimizada** - 2 queries paralelas buscando apenas `category_id`, `value`, `type_id`
+  - **Código**: `src/components/insightsCards.tsx` e `src/context/transaction.context.tsx` (função `fetchPeriodComparison`)
+
+- **Saldo total** (receitas - despesas) do período filtrado
+- **Total de receitas** acumuladas do período
+- **Total de despesas** acumuladas do período
+- **Gráfico de evolução**:
+  - Últimos 6 meses (quando "Todos" selecionado)
+  - 12 meses completos (quando ano específico selecionado)
+  - Linha de receitas (verde)
+  - Linha de despesas (vermelha)
+- **Gráfico de pizza** - Top 6 despesas por categoria
 - **Estatísticas gerais**:
-  - Total de transações
-  - Média de despesas
-  - Média de receitas
+  - Total de transações do período
+  - Média de despesas do período
+  - Média de receitas do período
 
 ### 📱 Lista de Transações
 
@@ -411,6 +467,9 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 
 - **Paginação** de transações (10 por página)
 - **Infinite Scroll** com botão "voltar ao topo" animado
+- **Onboarding Persistente** - AsyncStorage para controle de primeira visualização
+- **Filtros Dinâmicos** - Dashboard adapta gráficos baseado no ano selecionado
+- **Insights Inteligentes** - Comparação automática de períodos com regras configuráveis
 - **Cache de imagens** para performance
 - **Compressão de imagens** antes do upload
 - **Lazy loading** de componentes
@@ -418,9 +477,10 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 - **Validação em tempo real** de formulários
 - **Gestão de erros** centralizada
 - **Sistema de tipos** completo com TypeScript
-- **Queries otimizadas** - Busca apenas campos necessários
+- **Queries otimizadas** - Busca apenas campos necessários (ex: `type_id`, `value`)
 - **Execução paralela** - Múltiplas queries simultâneas com `Promise.all`
 - **Debounce** na busca para reduzir requisições
+- **Agregação eficiente** - Cálculos no frontend após queries otimizadas
 
 ## 📁 Estrutura do Projeto
 
@@ -442,11 +502,13 @@ byte-bank-app/
 │   │   ├── dismissKeyboardView.tsx
 │   │   ├── filterTransactions.tsx     # Filtros avançados com períodos rápidos
 │   │   ├── input.tsx
+│   │   ├── insightsCards.tsx          # Cards de insights financeiros automáticos
 │   │   ├── loading.tsx
 │   │   ├── receiptPicker.tsx
 │   │   ├── searchBar.tsx
 │   │   ├── snackBar.tsx
-│   │   ├── yearSummaryCards.tsx      # Cards de resumo anual
+│   │   ├── yearSelector.tsx           # Seletor de ano para dashboard
+│   │   ├── yearSummaryCards.tsx       # Cards de resumo anual
 │   │   └── transactions/
 │   │       ├── buttonIconSelect.tsx
 │   │       ├── errorMessage.tsx
@@ -474,7 +536,7 @@ byte-bank-app/
 │   │
 │   ├── screens/             # Telas da aplicação
 │   │   ├── dashboard/
-│   │   │   └── index.tsx    # Dashboard com gráficos
+│   │   │   └── index.tsx    # Dashboard com gráficos e insights
 │   │   ├── home/
 │   │   │   ├── index.tsx    # Lista de transações
 │   │   │   ├── list/
@@ -498,6 +560,8 @@ byte-bank-app/
 │   │   │   └── loginForm/
 │   │   │       ├── index.tsx
 │   │   │       └── schema.ts
+│   │   ├── onboarding/
+│   │   │   └── index.tsx    # Onboarding de boas-vindas
 │   │   └── signup/
 │   │       ├── index.tsx
 │   │       └── signupForm/
@@ -516,11 +580,13 @@ byte-bank-app/
 │   │
 │   └── utils/               # Utilitários
 │       ├── constants/
-│       │   └── supabase.ts  # Constantes Supabase
+│       │   ├── onboarding.ts  # Constantes do Onboarding
+│       │   └── supabase.ts    # Constantes Supabase
 │       ├── hooks/
 │       │   ├── useAnimatedView.tsx
 │       │   ├── useInfiniteScroll.tsx
-│       │   └── useKeyboardVisible.tsx
+│       │   ├── useKeyboardVisible.tsx
+│       │   └── useOnboarding.tsx  # Hook para gerenciar onboarding
 │       └── reanimated.config.ts
 │
 ├── android/                 # Projeto Android nativo
@@ -747,6 +813,15 @@ App → Router → AuthContext
 2. **Listagem**: `Home` → `TransactionContext` → `Supabase` → Cache
 3. **Edição**: `EditForm` → `TransactionContext` → `Supabase` → Refresh
 4. **Exclusão**: `DeleteModal` → `TransactionContext` → `Supabase` → Refresh
+5. **Busca Anual**: `Home` → `TransactionContext.fetchYearSummary` → `Supabase` (query otimizada)
+6. **Filtro por Ano**: `Dashboard` → `TransactionContext.fetchTransactionsByYear` → `Supabase`
+7. **Insights**: `Dashboard` → `TransactionContext.fetchPeriodComparison` → `Supabase` (2 queries paralelas)
+
+### Gerenciamento de Onboarding
+
+- **Verificação**: `PublicStack` → `useOnboarding` → `AsyncStorage` → decide rota inicial
+- **Completar**: `Onboarding` → `AsyncStorage.setItem` → navega para Login
+- **Resetar**: `useOnboarding.resetOnboarding` → `AsyncStorage.removeItem` (para testes)
 
 ## 🗄️ Banco de Dados
 
