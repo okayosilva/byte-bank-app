@@ -88,7 +88,10 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     setCategories(data);
   };
 
-  const deleteReceipt = async (receiptUrl: string): Promise<void> => {
+  const deleteReceipt = async (
+    receiptUrl: string,
+    userId: string
+  ): Promise<void> => {
     try {
       const url = new URL(receiptUrl);
       const pathParts = url.pathname.split(
@@ -100,6 +103,14 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       }
 
       const filePath = pathParts[1];
+
+      // Verifica se o arquivo pertence ao usuário antes de deletar
+      if (!filePath.startsWith(`${userId}/`)) {
+        console.error(
+          "Tentativa de deletar arquivo de outro usuário bloqueada"
+        );
+        throw new Error("Você não tem permissão para deletar este arquivo");
+      }
 
       const { error } = await supabase.storage
         .from("receipts")
@@ -227,7 +238,18 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
 
   const fetchTransactions = useCallback(
     async (filters?: TransactionFilters, append: boolean = false) => {
-      let query = supabase.from("transactions").select("*", { count: "exact" });
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Usuário não está autenticado");
+      }
+
+      let query = supabase
+        .from("transactions")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id);
 
       const defaultPage = 0;
       const defaultPerPage = 10;
@@ -301,9 +323,18 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
   );
 
   const fetchAllTransactions = async (): Promise<Transaction[]> => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Usuário não está autenticado");
+    }
+
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -314,9 +345,19 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
   };
 
   const calculateTotalTransactions = async () => {
-    const query = supabase.from("transactions").select("*");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const { data, error } = await query;
+    if (!user) {
+      throw new Error("Usuário não está autenticado");
+    }
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", user.id);
+
     if (error) {
       throw error;
     }
@@ -367,18 +408,19 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
       .from("transactions")
       .select("receipt_url")
       .eq("id", transactionId)
+      .eq("user_id", user.id)
       .single();
 
     let receiptUrl = transaction.receipt_url;
 
     if (receiptUrl && receiptUrl.startsWith("file://")) {
       if (oldTransaction?.receipt_url) {
-        await deleteReceipt(oldTransaction.receipt_url);
+        await deleteReceipt(oldTransaction.receipt_url, user.id);
       }
 
       receiptUrl = await uploadReceipt(receiptUrl, user.id);
     } else if (!receiptUrl && oldTransaction?.receipt_url) {
-      await deleteReceipt(oldTransaction.receipt_url);
+      await deleteReceipt(oldTransaction.receipt_url, user.id);
     }
 
     const updatedTransaction = {
@@ -393,7 +435,8 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     const { error } = await supabase
       .from("transactions")
       .update(updatedTransaction)
-      .eq("id", transactionId);
+      .eq("id", transactionId)
+      .eq("user_id", user.id);
 
     if (error) {
       throw error;
@@ -403,23 +446,33 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
   };
 
   const deleteTransaction = async (transactionId: number) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Usuário não está autenticado");
+    }
+
     const { data: transaction } = await supabase
       .from("transactions")
       .select("receipt_url")
       .eq("id", transactionId)
+      .eq("user_id", user.id)
       .single();
 
     const { error } = await supabase
       .from("transactions")
       .delete()
-      .eq("id", transactionId);
+      .eq("id", transactionId)
+      .eq("user_id", user.id);
 
     if (error) {
       throw error;
     }
 
     if (transaction?.receipt_url) {
-      await deleteReceipt(transaction.receipt_url);
+      await deleteReceipt(transaction.receipt_url, user.id);
     }
 
     await fetchTransactions({ page: 0 }, false);

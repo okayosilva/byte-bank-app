@@ -67,7 +67,6 @@ export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
   }, []);
 
   const handleAuth = async ({ email, password }: LoginFormProps) => {
-    console.log("handleAuth", email, password);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -96,6 +95,23 @@ export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const handleSignup = async ({ email, password, name }: SignupFormProps) => {
     try {
+      // PRIMEIRO: Verifica se email já existe tentando fazer login com senha inválida
+      const { error: checkError } = await supabase.auth.signInWithPassword({
+        email,
+        password: "invalid_password_check_12345!@#$%",
+      });
+
+      // Se retornou "Invalid login credentials", o email JÁ EXISTE
+      if (
+        checkError &&
+        checkError.message.includes("Invalid login credentials")
+      ) {
+        throw new Error(
+          "Este email já está cadastrado. Tente fazer login ou use outro email."
+        );
+      }
+
+      // Se chegou aqui, o email não existe - prossegue com cadastro
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -107,11 +123,27 @@ export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
       });
 
       if (error) {
-        console.error("Erro no cadastro:", error.message);
+        // Trata erro específico de email já existente
+        if (
+          error.message.includes("User already registered") ||
+          error.message.includes("already registered") ||
+          error.message.includes("duplicate key")
+        ) {
+          throw new Error(
+            "Este email já está cadastrado. Tente fazer login ou use outro email."
+          );
+        }
+
         throw new Error(error.message);
       }
+
+      // Verifica se o usuário foi realmente criado
+      if (!data || !data.user) {
+        throw new Error(
+          "Este email já está cadastrado. Tente fazer login ou use outro email."
+        );
+      }
     } catch (error) {
-      console.error("Erro no cadastro:", error);
       throw error;
     }
   };

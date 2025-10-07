@@ -6,7 +6,7 @@ import { PublicStackParamList } from "@/routes/stack/publicStacks";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Text, TouchableOpacity, View } from "react-native";
 import { loginFormSchema } from "./schema";
@@ -21,6 +21,20 @@ export const LoginForm = () => {
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [loginError, setLoginError] = useState("");
+
+  // Reset estado quando o componente monta
+  useEffect(() => {
+    setShowEmailConfirmation(false);
+    setUserEmail("");
+    setLoginError("");
+  }, []);
+
+  // Reset estado quando volta para o formulário de login
+  const handleBackToLogin = () => {
+    setShowEmailConfirmation(false);
+    setUserEmail("");
+    setLoginError("");
+  };
 
   const {
     control,
@@ -117,7 +131,7 @@ export const LoginForm = () => {
 
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={() => setShowEmailConfirmation(false)}
+          onPress={handleBackToLogin}
           className="mt-4"
         >
           <Text className="text-center text-base font-medium text-gray-500">

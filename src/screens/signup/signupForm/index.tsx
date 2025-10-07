@@ -1,11 +1,12 @@
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { useAuthContext } from "@/context/auth.context";
+import { useSnackbarContext } from "@/context/snackbar.context";
 import { PublicStackParamList } from "@/routes/stack/publicStacks";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { signupFormSchema } from "./schema";
@@ -23,10 +24,12 @@ interface SignupFormComponentProps {
 
 export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [signupError, setSignupError] = useState("");
 
   const {
     control,
     handleSubmit,
+    watch,
     formState: { isValid, isSubmitting, errors },
   } = useForm<SignupFormProps>({
     defaultValues: {
@@ -38,15 +41,34 @@ export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
     resolver: yupResolver(signupFormSchema),
   });
 
+  // Observa mudanças no campo email para limpar erro
+  const emailValue = watch("email");
+
   const { navigate } =
     useNavigation<StackNavigationProp<PublicStackParamList>>();
 
   const { handleSignup } = useAuthContext();
+  const { notify } = useSnackbarContext();
+
+  // Limpa erro quando usuário MODIFICA o email (não apenas quando tem valor)
+  useEffect(() => {
+    if (signupError) {
+      setSignupError("");
+    }
+  }, [emailValue]);
 
   const onSubmit = async (data: SignupFormProps) => {
+    setIsLoading(true);
+    setSignupError(""); // Limpar erro anterior
+
     try {
-      setIsLoading(true);
       await handleSignup(data);
+
+      // Sucesso - mostra notify e alert
+      notify({
+        message: "Cadastro realizado com sucesso!",
+        type: "SUCCESS",
+      });
 
       Alert.alert(
         "Cadastro realizado!",
@@ -59,8 +81,16 @@ export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
         ]
       );
     } catch (error: any) {
-      console.error("Erro no cadastro:", error);
-      Alert.alert("Erro", error.message || "Erro no cadastro");
+      // Para todos os erros, mostra notify
+      notify({
+        message: error.message || "Erro no cadastro",
+        type: "ERROR",
+      });
+
+      // Se é erro de email já existente, também mostra o card visual
+      if (error.message && error.message.includes("já está cadastrado")) {
+        setSignupError(error.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +124,13 @@ export const SignupForm = ({ onNavigateBack }: SignupFormComponentProps) => {
         placeholder="********"
         secureTextEntry
       />
+
+      {/* Exibe erro de email já existente */}
+      {signupError && (
+        <View className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <Text className="text-red-700 text-base mb-3">{signupError}</Text>
+        </View>
+      )}
 
       <View className="mt-2">
         <Button

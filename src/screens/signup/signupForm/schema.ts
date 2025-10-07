@@ -10,7 +10,11 @@ export const signupFormSchema = yup.object().shape({
       "Senha deve conter pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial (@$!%*?&)"
     )
     .required("Senha é obrigatória"),
-  name: yup.string().required("Nome é obrigatório"),
+  name: yup
+    .string()
+    .required("Nome é obrigatório")
+    .matches(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras")
+    .min(3, "Nome deve ter pelo menos 3 caracteres"),
   confirmPassword: yup
     .string()
     .required("Confirmar senha é obrigatório")
