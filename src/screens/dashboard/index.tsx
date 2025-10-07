@@ -1,6 +1,8 @@
 import { AnimatedView } from "@/components/animatedView";
+import { InsightsCards } from "@/components/insightsCards";
 import { Loading } from "@/components/loading";
-import { useTransactionContext } from "@/context/transaction.context";
+import { YearSelector } from "@/components/yearSelector";
+import { Insight, useTransactionContext } from "@/context/transaction.context";
 import { colors } from "@/theme/colors";
 import { useAnimatedView } from "@/utils/hooks/useAnimatedView";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -26,12 +28,20 @@ interface CategoryData {
 
 export const Dashboard = () => {
   const { fadeAnim, fadeIn } = useAnimatedView();
-  const { fetchAllTransactions, categories, totalTransactions } =
+  const { fetchTransactionsByYear, categories, fetchPeriodComparison } =
     useTransactionContext();
   const [allTransactions, setAllTransactions] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = todos
+  const [filteredTotals, setFilteredTotals] = useState({
+    income: 0,
+    expense: 0,
+    total: 0,
+  });
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
 
   const screenWidth = Dimensions.get("window").width;
 
@@ -42,35 +52,154 @@ export const Dashboard = () => {
   useFocusEffect(
     useCallback(() => {
       loadAllTransactions();
-    }, [])
+    }, [selectedYear])
   );
 
   useEffect(() => {
+    loadAllTransactions();
+  }, [selectedYear]);
+
+  useEffect(() => {
     if (allTransactions.length > 0) {
+      calculateFilteredTotals();
       processMonthlyData();
       processCategoryData();
       setIsLoading(false);
     } else {
+      setFilteredTotals({ income: 0, expense: 0, total: 0 });
       setIsLoading(false);
     }
   }, [allTransactions]);
 
+  const calculateFilteredTotals = () => {
+    const income = allTransactions
+      .filter((t) => t.type_id === 1)
+      .reduce((sum, t) => sum + t.value / 100, 0);
+
+    const expense = allTransactions
+      .filter((t) => t.type_id === 2)
+      .reduce((sum, t) => sum + t.value / 100, 0);
+
+    setFilteredTotals({
+      income,
+      expense,
+      total: income - expense,
+    });
+  };
+
   const loadAllTransactions = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchAllTransactions();
+      const year = selectedYear === 0 ? null : selectedYear;
+      const data = await fetchTransactionsByYear(year);
       setAllTransactions(data);
+
+      // Carrega insights após carregar transações
+      loadInsights();
     } catch (error) {
       setIsLoading(false);
     }
   };
 
-  const processMonthlyData = () => {
-    const last6Months: MonthlyData[] = [];
-    const today = new Date();
+  const loadInsights = async () => {
+    try {
+      setIsLoadingInsights(true);
 
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const formatDate = (date: Date) => date.toISOString();
+      let currentStart: string;
+      let currentEnd: string;
+      let previousStart: string;
+      let previousEnd: string;
+
+      if (selectedYear === 0) {
+        // "Todos": Compara mês atual vs mês anterior
+        const now = new Date();
+        const currentMonthStart = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1
+        );
+        const currentMonthEnd = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59
+        );
+
+        const previousMonthStart = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const previousMonthEnd = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          0,
+          23,
+          59,
+          59
+        );
+
+        currentStart = formatDate(currentMonthStart);
+        currentEnd = formatDate(currentMonthEnd);
+        previousStart = formatDate(previousMonthStart);
+        previousEnd = formatDate(previousMonthEnd);
+      } else {
+        // Ano específico: Compara ano selecionado vs ano anterior
+        const currentYearStart = new Date(selectedYear, 0, 1);
+        const currentYearEnd = new Date(selectedYear, 11, 31, 23, 59, 59);
+
+        const previousYearStart = new Date(selectedYear - 1, 0, 1);
+        const previousYearEnd = new Date(selectedYear - 1, 11, 31, 23, 59, 59);
+
+        currentStart = formatDate(currentYearStart);
+        currentEnd = formatDate(currentYearEnd);
+        previousStart = formatDate(previousYearStart);
+        previousEnd = formatDate(previousYearEnd);
+      }
+
+      const insightsData = await fetchPeriodComparison(
+        currentStart,
+        currentEnd,
+        previousStart,
+        previousEnd
+      );
+
+      // Adiciona texto de comparação aos insights
+      const comparisonText =
+        selectedYear === 0 ? "vs mês anterior" : `vs ${selectedYear - 1}`;
+
+      const enrichedInsights = insightsData.map((insight) => ({
+        ...insight,
+        comparisonText,
+      }));
+
+      setInsights(enrichedInsights);
+      setIsLoadingInsights(false);
+    } catch (error) {
+      console.error("Erro ao carregar insights:", error);
+      setIsLoadingInsights(false);
+    }
+  };
+
+  const processMonthlyData = () => {
+    const monthsData: MonthlyData[] = [];
+    const referenceYear =
+      selectedYear === 0 ? new Date().getFullYear() : selectedYear;
+
+    // Se está filtrando por ano específico, mostra todos os 12 meses do ano
+    // Se é "Todos", mostra os últimos 6 meses
+    const monthsToShow = selectedYear === 0 ? 6 : 12;
+    const startIndex = selectedYear === 0 ? 5 : 11;
+
+    for (let i = startIndex; i >= startIndex - (monthsToShow - 1); i--) {
+      const date =
+        selectedYear === 0
+          ? new Date(new Date().getFullYear(), new Date().getMonth() - i, 1)
+          : new Date(referenceYear, i, 1);
+
       const monthName = date.toLocaleDateString("pt-BR", { month: "short" });
 
       const monthTransactions = allTransactions.filter((t) => {
@@ -89,10 +218,10 @@ export const Dashboard = () => {
         .filter((t) => t.type_id === 2)
         .reduce((sum, t) => sum + t.value / 100, 0);
 
-      last6Months.push({ month: monthName, income, expense });
+      monthsData.push({ month: monthName, income, expense });
     }
 
-    setMonthlyData(last6Months);
+    setMonthlyData(monthsData);
   };
 
   const processCategoryData = () => {
@@ -178,6 +307,13 @@ export const Dashboard = () => {
             </Text>
           </View>
 
+          <View className="px-6 mb-4">
+            <YearSelector
+              selectedYear={selectedYear}
+              onYearChange={setSelectedYear}
+            />
+          </View>
+
           {allTransactions.length === 0 ? (
             <View className="flex-1 items-center justify-center px-6 py-20">
               <MaterialIcons
@@ -207,7 +343,7 @@ export const Dashboard = () => {
                     />
                     <Text className="text-white text-sm mt-2">Receitas</Text>
                     <Text className="text-white text-xl font-bold mt-1">
-                      {totalTransactions.income.toLocaleString("pt-BR", {
+                      {filteredTotals.income.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
@@ -225,7 +361,7 @@ export const Dashboard = () => {
                     />
                     <Text className="text-white text-sm mt-2">Despesas</Text>
                     <Text className="text-white text-xl font-bold mt-1">
-                      {totalTransactions.expense.toLocaleString("pt-BR", {
+                      {filteredTotals.expense.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
@@ -244,7 +380,7 @@ export const Dashboard = () => {
                   />
                   <Text className="text-white text-sm mt-2">Saldo</Text>
                   <Text className="text-white text-2xl font-bold mt-1">
-                    {totalTransactions.total.toLocaleString("pt-BR", {
+                    {filteredTotals.total.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
                     })}
@@ -252,10 +388,17 @@ export const Dashboard = () => {
                 </View>
               </View>
 
+              <InsightsCards
+                insights={insights}
+                isLoading={isLoadingInsights}
+              />
+
               {monthlyData.length > 0 && (
                 <View className="px-6 mb-6">
                   <Text className="text-lg font-semibold text-background-secondary mb-3">
-                    Evolução dos últimos 6 meses
+                    {selectedYear === 0
+                      ? "Evolução dos últimos 6 meses"
+                      : `Evolução mensal de ${selectedYear}`}
                   </Text>
                   <View
                     className="rounded-2xl overflow-hidden"
@@ -344,7 +487,7 @@ export const Dashboard = () => {
                     <Text className="text-background-secondary font-semibold">
                       {allTransactions.filter((t) => t.type_id === 2).length > 0
                         ? (
-                            totalTransactions.expense /
+                            filteredTotals.expense /
                             allTransactions.filter((t) => t.type_id === 2)
                               .length
                           ).toLocaleString("pt-BR", {
@@ -359,7 +502,7 @@ export const Dashboard = () => {
                     <Text className="text-background-secondary font-semibold">
                       {allTransactions.filter((t) => t.type_id === 1).length > 0
                         ? (
-                            totalTransactions.income /
+                            filteredTotals.income /
                             allTransactions.filter((t) => t.type_id === 1)
                               .length
                           ).toLocaleString("pt-BR", {

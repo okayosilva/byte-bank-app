@@ -17,6 +17,18 @@ import {
   useState,
 } from "react";
 
+export interface Insight {
+  id: string;
+  type: "success" | "warning" | "danger" | "info";
+  title: string;
+  description: string;
+  icon: string;
+  categoryName?: string;
+  value?: number;
+  percentage?: number;
+  comparisonText?: string;
+}
+
 type TransactionContextType = {
   fetchCategories: () => Promise<void>;
   categories: TransactionCategory[];
@@ -31,6 +43,18 @@ type TransactionContextType = {
   ) => Promise<any[]>;
   fetchAllTransactions: () => Promise<Transaction[]>;
   calculateTotalTransactions: () => Promise<void>;
+  fetchYearSummary: (year: string) => Promise<{
+    income: number;
+    expense: number;
+    totalTransactions: number;
+  }>;
+  fetchTransactionsByYear: (year: number | null) => Promise<any[]>;
+  fetchPeriodComparison: (
+    currentStart: string,
+    currentEnd: string,
+    previousStart: string,
+    previousEnd: string
+  ) => Promise<Insight[]>;
   totalTransactions: TotalAmountTransactions;
   transactions: Transaction[];
   deleteTransaction: (transactionId: number) => Promise<void>;
@@ -219,8 +243,8 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
           query = query.eq("type_id", filters.typeId);
         }
 
-        if (filters.categoryIds) {
-          query = query.in("category_id", [filters.categoryIds]);
+        if (filters.categoryIds && filters.categoryIds.length > 0) {
+          query = query.in("category_id", filters.categoryIds);
         }
 
         if (filters.from) {
@@ -401,6 +425,287 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
     await fetchTransactions({ page: 0 }, false);
   };
 
+  const fetchYearSummary = async (year: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Usuário não está autenticado");
+    }
+
+    const startDate = `${year}-01-01T00:00:00`;
+    const endDate = `${year}-12-31T23:59:59`;
+
+    // Busca com agregação no banco usando RPC (mais eficiente)
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("type_id, value")
+      .eq("user_id", user.id)
+      .gte("created_at", startDate)
+      .lte("created_at", endDate);
+
+    if (error) {
+      throw error;
+    }
+
+    // Calcula totais
+    const summary = (data || []).reduce(
+      (acc, transaction) => {
+        const value = transaction.value / 100;
+        if (transaction.type_id === 1) {
+          acc.income += value;
+        } else if (transaction.type_id === 2) {
+          acc.expense += value;
+        }
+        acc.totalTransactions++;
+        return acc;
+      },
+      { income: 0, expense: 0, totalTransactions: 0 }
+    );
+
+    return summary;
+  };
+
+  const fetchTransactionsByYear = async (year: number | null) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Usuário não está autenticado");
+    }
+
+    let query = supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    // Se year é null ou 0, busca todas as transações
+    if (year && year > 0) {
+      const startDate = `${year}-01-01T00:00:00`;
+      const endDate = `${year}-12-31T23:59:59`;
+      query = query.gte("created_at", startDate).lte("created_at", endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  };
+
+  const fetchPeriodComparison = async (
+    currentStart: string,
+    currentEnd: string,
+    previousStart: string,
+    previousEnd: string
+  ): Promise<Insight[]> => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Usuário não está autenticado");
+    }
+
+    // Query otimizada para o período atual (apenas campos necessários)
+    const { data: currentData, error: currentError } = await supabase
+      .from("transactions")
+      .select("category_id, value, type_id")
+      .eq("user_id", user.id)
+      .gte("created_at", currentStart)
+      .lte("created_at", currentEnd);
+
+    if (currentError) throw currentError;
+
+    // Query otimizada para o período anterior
+    const { data: previousData, error: previousError } = await supabase
+      .from("transactions")
+      .select("category_id, value, type_id")
+      .eq("user_id", user.id)
+      .gte("created_at", previousStart)
+      .lte("created_at", previousEnd);
+
+    if (previousError) throw previousError;
+
+    // Agrupa por categoria
+    const groupByCategory = (transactions: any[]) => {
+      return transactions.reduce(
+        (acc, t) => {
+          if (!acc[t.category_id]) {
+            acc[t.category_id] = { income: 0, expense: 0 };
+          }
+          const value = t.value / 100;
+          if (t.type_id === 1) {
+            acc[t.category_id].income += value;
+          } else if (t.type_id === 2) {
+            acc[t.category_id].expense += value;
+          }
+          return acc;
+        },
+        {} as Record<number, { income: number; expense: number }>
+      );
+    };
+
+    const currentByCategory = groupByCategory(currentData || []);
+    const previousByCategory = groupByCategory(previousData || []);
+
+    // Calcula totais gerais
+    const currentTotal = {
+      income: Number(
+        Object.values(currentByCategory).reduce(
+          (sum, c: any) => sum + c.income,
+          0
+        )
+      ),
+      expense: Number(
+        Object.values(currentByCategory).reduce(
+          (sum, c: any) => sum + c.expense,
+          0
+        )
+      ),
+    };
+    const previousTotal = {
+      income: Number(
+        Object.values(previousByCategory).reduce(
+          (sum, c: any) => sum + c.income,
+          0
+        )
+      ),
+      expense: Number(
+        Object.values(previousByCategory).reduce(
+          (sum, c: any) => sum + c.expense,
+          0
+        )
+      ),
+    };
+
+    const insights: Insight[] = [];
+
+    // Insight 1: Comparação de receitas totais
+    if (previousTotal.income > 0) {
+      const incomeDiff = currentTotal.income - previousTotal.income;
+      const incomePercentage = (incomeDiff / previousTotal.income) * 100;
+
+      if (Math.abs(incomePercentage) >= 20) {
+        insights.push({
+          id: "income-total",
+          type: incomePercentage > 0 ? "success" : "warning",
+          title:
+            incomePercentage > 0
+              ? "Ótimo! Suas receitas aumentaram"
+              : "Suas receitas diminuíram",
+          description: `${Math.abs(incomeDiff).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })} (${Math.abs(incomePercentage).toFixed(0)}% vs período anterior)`,
+          icon: incomePercentage > 0 ? "trending-up" : "trending-down",
+          value: Math.abs(incomeDiff),
+          percentage: Math.abs(incomePercentage),
+        });
+      }
+    }
+
+    // Insight 2: Comparação de despesas totais
+    if (previousTotal.expense > 0) {
+      const expenseDiff = currentTotal.expense - previousTotal.expense;
+      const expensePercentage = (expenseDiff / previousTotal.expense) * 100;
+
+      if (Math.abs(expensePercentage) >= 20) {
+        insights.push({
+          id: "expense-total",
+          type: expenseDiff < 0 ? "success" : "danger",
+          title:
+            expenseDiff < 0
+              ? "Parabéns! Você economizou"
+              : "Atenção: Gastos aumentaram",
+          description: `${Math.abs(expenseDiff).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })} (${Math.abs(expensePercentage).toFixed(0)}% vs período anterior)`,
+          icon: expenseDiff < 0 ? "check-circle" : "warning",
+          value: Math.abs(expenseDiff),
+          percentage: Math.abs(expensePercentage),
+        });
+      }
+    }
+
+    // Insight 3: Maiores mudanças por categoria
+    const categoryChanges: Array<{
+      categoryId: number;
+      diff: number;
+      percentage: number;
+      isExpense: boolean;
+    }> = [];
+
+    const allCategoryIds = new Set([
+      ...Object.keys(currentByCategory).map(Number),
+      ...Object.keys(previousByCategory).map(Number),
+    ]);
+
+    allCategoryIds.forEach((categoryId) => {
+      const current = currentByCategory[categoryId] || {
+        income: 0,
+        expense: 0,
+      };
+      const previous = previousByCategory[categoryId] || {
+        income: 0,
+        expense: 0,
+      };
+
+      // Apenas despesas para simplificar
+      if (previous.expense > 0) {
+        const diff = current.expense - previous.expense;
+        const percentage = (diff / previous.expense) * 100;
+
+        if (Math.abs(percentage) >= 30) {
+          categoryChanges.push({
+            categoryId,
+            diff,
+            percentage,
+            isExpense: true,
+          });
+        }
+      }
+    });
+
+    // Ordena por maior mudança absoluta
+    categoryChanges.sort(
+      (a, b) => Math.abs(b.percentage) - Math.abs(a.percentage)
+    );
+
+    // Adiciona top 2 mudanças de categoria
+    categoryChanges.slice(0, 2).forEach((change, index) => {
+      const category = categories.find((c) => c.id === change.categoryId);
+      if (!category) return;
+
+      const isReduction = change.diff < 0;
+
+      insights.push({
+        id: `category-${change.categoryId}`,
+        type: isReduction ? "success" : "warning",
+        title: isReduction
+          ? `Parabéns! Você economizou em ${category.name}`
+          : `Atenção: Gastos com ${category.name} aumentaram`,
+        description: `${Math.abs(change.diff).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        })} (${Math.abs(change.percentage).toFixed(0)}% vs período anterior)`,
+        icon: isReduction ? "savings" : "priority-high",
+        categoryName: category.name,
+        value: Math.abs(change.diff),
+        percentage: Math.abs(change.percentage),
+      });
+    });
+
+    // Limita a 4 insights mais relevantes
+    return insights.slice(0, 4);
+  };
+
   return (
     <TransactionContext.Provider
       value={{
@@ -411,6 +716,9 @@ export const TransactionContextProvider: FC<PropsWithChildren> = ({
         fetchTransactions,
         fetchAllTransactions,
         calculateTotalTransactions,
+        fetchYearSummary,
+        fetchTransactionsByYear,
+        fetchPeriodComparison,
         totalTransactions,
         transactions,
         deleteTransaction,

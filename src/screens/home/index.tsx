@@ -1,10 +1,13 @@
 import { AnimatedView } from "@/components/animatedView";
 import { FilterTransactions } from "@/components/filterTransactions";
 import { SearchBar } from "@/components/searchBar";
+import { YearSummaryCards } from "@/components/yearSummaryCards";
 import { useBottomSheetContext } from "@/context/bottomSheet.context";
 import { useSnackbarContext } from "@/context/snackbar.context";
 import { useTransactionContext } from "@/context/transaction.context";
+import { colors } from "@/theme/colors";
 import { useAnimatedView } from "@/utils/hooks/useAnimatedView";
+import { MaterialIcons } from "@expo/vector-icons";
 import React, {
   useCallback,
   useEffect,
@@ -14,9 +17,11 @@ import React, {
 } from "react";
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   RefreshControl,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,6 +33,7 @@ export const Home = () => {
   const {
     fetchCategories,
     fetchTransactions,
+    fetchYearSummary,
     totalTransactions,
     transactions,
     hasMore,
@@ -39,13 +45,32 @@ export const Home = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>(undefined);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [yearSummary, setYearSummary] = useState<{
+    year: string;
+    income: number;
+    expense: number;
+  } | null>(null);
+  const [isLoadingYear, setIsLoadingYear] = useState(false);
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLoadingRef = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
+  const scrollButtonAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fadeIn();
   }, []);
+
+  // Anima o botão de scroll to top
+  useEffect(() => {
+    Animated.spring(scrollButtonAnim, {
+      toValue: showScrollToTop ? 1 : 0,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 40,
+    }).start();
+  }, [showScrollToTop]);
 
   const { notify } = useSnackbarContext();
 
@@ -118,19 +143,66 @@ export const Home = () => {
     async (text: string) => {
       try {
         setCurrentPage(0);
-        const filters = text.trim()
-          ? { searchText: text.trim(), page: 0 }
-          : { page: 0 };
-        setActiveFilters(filters);
-        await fetchTransactions(filters, false);
+
+        // Detecta se é uma busca por ano (/YYYY)
+        const yearRegex = /^\/(\d{4})$/;
+        const yearMatch = text.trim().match(yearRegex);
+        const isYearSearch = yearMatch !== null;
+
+        if (isYearSearch) {
+          const year = yearMatch![1];
+          setIsLoadingYear(true);
+
+          // Inicializa o yearSummary com loading
+          setYearSummary({
+            year,
+            income: 0,
+            expense: 0,
+          });
+
+          // Busca transações do ano para listagem
+          const startDate = new Date(`${year}-01-01T00:00:00`);
+          const endDate = new Date(`${year}-12-31T23:59:59`);
+
+          const filters = {
+            from: startDate,
+            to: endDate,
+            page: 0,
+          };
+
+          setActiveFilters(filters);
+
+          // Busca otimizada do resumo anual (apenas type_id e value)
+          const [summary] = await Promise.all([
+            fetchYearSummary(year),
+            fetchTransactions(filters, false),
+          ]);
+
+          setYearSummary({
+            year,
+            income: summary.income,
+            expense: summary.expense,
+          });
+          setIsLoadingYear(false);
+        } else {
+          // Busca normal por texto
+          setYearSummary(null);
+          setIsLoadingYear(false);
+          const filters = text.trim()
+            ? { searchText: text.trim(), page: 0 }
+            : { page: 0 };
+          setActiveFilters(filters);
+          await fetchTransactions(filters, false);
+        }
       } catch (error) {
+        setIsLoadingYear(false);
         notify({
           message: "Erro ao buscar transações",
           type: "ERROR",
         });
       }
     },
-    [fetchTransactions, notify]
+    [fetchTransactions, fetchYearSummary, notify]
   );
 
   const handleSearch = useCallback(async () => {
@@ -140,18 +212,65 @@ export const Home = () => {
       }
 
       setCurrentPage(0);
-      const filters = searchText.trim()
-        ? { searchText: searchText.trim(), page: 0 }
-        : { page: 0 };
-      setActiveFilters(filters);
-      await fetchTransactions(filters, false);
+
+      // Detecta se é uma busca por ano (/YYYY)
+      const yearRegex = /^\/(\d{4})$/;
+      const yearMatch = searchText.trim().match(yearRegex);
+      const isYearSearch = yearMatch !== null;
+
+      if (isYearSearch) {
+        const year = yearMatch![1];
+        setIsLoadingYear(true);
+
+        // Inicializa o yearSummary com loading
+        setYearSummary({
+          year,
+          income: 0,
+          expense: 0,
+        });
+
+        // Busca transações do ano para listagem
+        const startDate = new Date(`${year}-01-01T00:00:00`);
+        const endDate = new Date(`${year}-12-31T23:59:59`);
+
+        const filters = {
+          from: startDate,
+          to: endDate,
+          page: 0,
+        };
+
+        setActiveFilters(filters);
+
+        // Busca otimizada do resumo anual (apenas type_id e value)
+        const [summary] = await Promise.all([
+          fetchYearSummary(year),
+          fetchTransactions(filters, false),
+        ]);
+
+        setYearSummary({
+          year,
+          income: summary.income,
+          expense: summary.expense,
+        });
+        setIsLoadingYear(false);
+      } else {
+        // Busca normal por texto
+        setYearSummary(null);
+        setIsLoadingYear(false);
+        const filters = searchText.trim()
+          ? { searchText: searchText.trim(), page: 0 }
+          : { page: 0 };
+        setActiveFilters(filters);
+        await fetchTransactions(filters, false);
+      }
     } catch (error) {
+      setIsLoadingYear(false);
       notify({
         message: "Erro ao buscar transações",
         type: "ERROR",
       });
     }
-  }, [searchText, fetchTransactions, notify]);
+  }, [searchText, fetchTransactions, fetchYearSummary, notify]);
 
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore || isLoadingRef.current) {
@@ -196,6 +315,8 @@ export const Home = () => {
       setSearchText("");
       setActiveFilters(undefined);
       setHasActiveFilters(false);
+      setYearSummary(null);
+      setIsLoadingYear(false);
 
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -214,6 +335,16 @@ export const Home = () => {
       setIsRefreshing(false);
     }
   }, [fetchTransactions, notify]);
+
+  const handleScroll = useCallback((event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    // Mostra o botão quando rolar mais de 300px para baixo
+    setShowScrollToTop(offsetY > 300);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: any }) => <TransactionListCard transaction={item} />,
@@ -279,6 +410,20 @@ export const Home = () => {
           onFilterPress={handleOpenFilter}
           filterActive={hasActiveFilters}
         />
+        {yearSummary && (
+          <YearSummaryCards
+            year={yearSummary.year}
+            income={yearSummary.income}
+            expense={yearSummary.expense}
+            isLoading={isLoadingYear}
+            isEmpty={
+              !isLoadingYear &&
+              yearSummary.income === 0 &&
+              yearSummary.expense === 0 &&
+              transactions.length === 0
+            }
+          />
+        )}
       </>
     ),
     [
@@ -286,6 +431,8 @@ export const Home = () => {
       transactions.length,
       searchText,
       hasActiveFilters,
+      yearSummary,
+      isLoadingYear,
       handleSearchChange,
       handleSearch,
       handleOpenFilter,
@@ -304,6 +451,7 @@ export const Home = () => {
     <SafeAreaView className="flex-1 ">
       <AnimatedView fadeAnim={fadeAnim}>
         <FlatList
+          ref={flatListRef}
           data={transactions}
           ListHeaderComponent={listHeaderComponent}
           ListFooterComponent={listFooterComponent}
@@ -312,6 +460,8 @@ export const Home = () => {
           renderItem={renderItem}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.2}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           contentContainerStyle={{ paddingBottom: 80 }}
           refreshControl={
             <RefreshControl
@@ -328,6 +478,51 @@ export const Home = () => {
           removeClippedSubviews={true}
           initialNumToRender={10}
         />
+
+        {/* Botão Scroll to Top */}
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 100,
+            right: 20,
+            opacity: scrollButtonAnim,
+            transform: [
+              {
+                scale: scrollButtonAnim,
+              },
+              {
+                translateY: scrollButtonAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [100, 0],
+                }),
+              },
+            ],
+          }}
+          pointerEvents={showScrollToTop ? "auto" : "none"}
+        >
+          <TouchableOpacity
+            onPress={scrollToTop}
+            activeOpacity={0.8}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: colors["accent-brand-background-primary"],
+              justifyContent: "center",
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 4,
+              },
+              shadowOpacity: 0.3,
+              shadowRadius: 4.65,
+              elevation: 8,
+            }}
+          >
+            <MaterialIcons name="arrow-upward" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Animated.View>
       </AnimatedView>
     </SafeAreaView>
   );

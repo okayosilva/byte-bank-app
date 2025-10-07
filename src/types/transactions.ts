@@ -20,7 +20,7 @@ type TransactionFilters = {
   to?: Date;
   typeId?: number;
   searchText?: string;
-  categoryIds?: number;
+  categoryIds?: number[];
   orderId?: string;
 };
 

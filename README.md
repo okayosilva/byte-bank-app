@@ -134,6 +134,8 @@ Este projeto atende a todos os requisitos do Tech Challenge da FIAP.
   - CRUD completo
   - Upload de comprovantes
   - Cálculo de totais
+  - Query otimizada para resumo anual (`fetchYearSummary`)
+  - Execução paralela de queries com `Promise.all`
 - **Snackbar Context** (`src/context/snackbar.context.tsx`)
   - Notificações globais
   - Feedback de sucesso/erro
@@ -297,6 +299,49 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 - **Login seguro** com sessão persistente
 - **Recuperação de senha** via email
 - **Reenvio de email de confirmação**
+
+### 🎯 Funcionalidades Avançadas
+
+#### 📊 Busca Anual Inteligente
+
+- **Busca por Ano** - Digite `/` seguido do ano (ex: `/2024`, `/2025`) na barra de busca
+- **Formato Especial** - A barra `/` indica uma busca especial por ano, diferenciando de buscas normais
+- **Resumo Anual Automático** - Exibe 3 cards horizontais com:
+  - 💚 **Total de Entradas** do ano (cor verde)
+  - ❤️ **Total de Saídas** do ano (cor vermelha)
+  - 💰 **Saldo do Ano** (entrada - saída)
+- **Query Otimizada** - Busca apenas os campos necessários (`type_id`, `value`)
+- **Execução Paralela** - Resumo e listagem carregam simultaneamente
+- **Estados Visuais**:
+  - Loading spinner durante a busca
+  - Estado vazio quando não há transações no ano
+  - Ícones e badges informativos
+- **Código**: `src/components/yearSummaryCards.tsx` e `src/context/transaction.context.tsx` (função `fetchYearSummary`)
+
+#### 🔍 Filtros Avançados
+
+- **Múltiplas Categorias** - Selecione várias categorias ao mesmo tempo (ex: Trabalho + Reforma)
+- **Filtros Rápidos de Data** - 3 botões com períodos pré-definidos:
+  - 📅 **Semana Passada** - Domingo a Sábado da semana anterior
+  - 📆 **Mês Passado** - Todo o mês anterior (1º ao último dia)
+  - 📋 **Trimestre Atual** - Trimestre atual (Jan-Mar, Abr-Jun, Jul-Set, Out-Dez)
+- **Campos de Data Manuais** - Campos "De" e "Até" para seleção customizada
+- **Validação Inteligente** - Só aplica filtro se pelo menos um campo estiver preenchido
+- **Feedback Visual** - SnackBar de erro se tentar filtrar sem seleção
+- **Design Moderno** - Botões coloridos com ícones Material Icons
+- **Código**: `src/components/filterTransactions.tsx`
+
+#### 🔝 Scroll to Top
+
+- **Botão Flutuante** - Aparece automaticamente após rolar 300px
+- **Animação Suave** - Efeito spring com fade in/out
+- **Scroll Animado** - Volta ao topo com animação suave
+- **Design Material** - Botão circular vermelho com ícone de seta
+- **Sombra e Elevação** - Destaque visual sobre o conteúdo
+- **Código**: `src/screens/home/index.tsx` (linhas 327-405)
+
+### 🔐 Autenticação (continuação)
+
 - **Logout** com limpeza de sessão
 - **Proteção de rotas** privadas
 
@@ -314,9 +359,15 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 ### 🔍 Busca e Filtros
 
 - **Busca por texto** com debounce para performance
-- **Filtro por categoria** de transação
+- **Busca por ano** - Digite `/` + ano (ex: `/2024`, `/2025`) para ver resumo anual completo
+- **Filtro múltiplo por categoria** - Selecione várias categorias simultaneamente
 - **Filtro por tipo** (receita/despesa)
-- **Filtro por período** (data inicial e final)
+- **Filtro por período** com campos "De" e "Até"
+- **Filtros rápidos de data**:
+  - Semana Passada
+  - Mês Passado
+  - Trimestre Atual
+- **Validação de filtros** - Só aplica se algum campo estiver selecionado
 - **Ordenação** por data ou valor
 - **Limpar filtros** rapidamente
 
@@ -359,6 +410,7 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 ### 📂 Funcionalidades Técnicas
 
 - **Paginação** de transações (10 por página)
+- **Infinite Scroll** com botão "voltar ao topo" animado
 - **Cache de imagens** para performance
 - **Compressão de imagens** antes do upload
 - **Lazy loading** de componentes
@@ -366,6 +418,9 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 - **Validação em tempo real** de formulários
 - **Gestão de erros** centralizada
 - **Sistema de tipos** completo com TypeScript
+- **Queries otimizadas** - Busca apenas campos necessários
+- **Execução paralela** - Múltiplas queries simultâneas com `Promise.all`
+- **Debounce** na busca para reduzir requisições
 
 ## 📁 Estrutura do Projeto
 
@@ -385,12 +440,13 @@ byte-bank-app/
 │   │   ├── confirmationModal.tsx
 │   │   ├── dateInput.tsx
 │   │   ├── dismissKeyboardView.tsx
-│   │   ├── filterTransactions.tsx
+│   │   ├── filterTransactions.tsx     # Filtros avançados com períodos rápidos
 │   │   ├── input.tsx
 │   │   ├── loading.tsx
 │   │   ├── receiptPicker.tsx
 │   │   ├── searchBar.tsx
 │   │   ├── snackBar.tsx
+│   │   ├── yearSummaryCards.tsx      # Cards de resumo anual
 │   │   └── transactions/
 │   │       ├── buttonIconSelect.tsx
 │   │       ├── errorMessage.tsx
@@ -811,7 +867,6 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ### Sobre o Tech Challenge
 
 Este projeto foi desenvolvido como atividade obrigatória do **Tech Challenge da FIAP**, que engloba conhecimentos de todas as disciplinas da fase e vale **90% da nota** de todas as disciplinas.
-
 
 ### Decisão Técnica: Supabase vs Firebase
 
