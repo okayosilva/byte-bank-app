@@ -34,7 +34,7 @@ export const Dashboard = () => {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = todos
+  const [selectedYear, setSelectedYear] = useState<number>(0);
   const [filteredTotals, setFilteredTotals] = useState({
     income: 0,
     expense: 0,
@@ -94,7 +94,6 @@ export const Dashboard = () => {
       const data = await fetchTransactionsByYear(year);
       setAllTransactions(data);
 
-      // Carrega insights após carregar transações
       loadInsights();
     } catch (error) {
       setIsLoading(false);
@@ -112,7 +111,6 @@ export const Dashboard = () => {
       let previousEnd: string;
 
       if (selectedYear === 0) {
-        // "Todos": Compara mês atual vs mês anterior
         const now = new Date();
         const currentMonthStart = new Date(
           now.getFullYear(),
@@ -147,7 +145,6 @@ export const Dashboard = () => {
         previousStart = formatDate(previousMonthStart);
         previousEnd = formatDate(previousMonthEnd);
       } else {
-        // Ano específico: Compara ano selecionado vs ano anterior
         const currentYearStart = new Date(selectedYear, 0, 1);
         const currentYearEnd = new Date(selectedYear, 11, 31, 23, 59, 59);
 
@@ -167,7 +164,6 @@ export const Dashboard = () => {
         previousEnd
       );
 
-      // Adiciona texto de comparação aos insights
       const comparisonText =
         selectedYear === 0 ? "vs mês anterior" : `vs ${selectedYear - 1}`;
 
@@ -189,8 +185,6 @@ export const Dashboard = () => {
     const referenceYear =
       selectedYear === 0 ? new Date().getFullYear() : selectedYear;
 
-    // Se está filtrando por ano específico, mostra todos os 12 meses do ano
-    // Se é "Todos", mostra os últimos 6 meses
     const monthsToShow = selectedYear === 0 ? 6 : 12;
     const startIndex = selectedYear === 0 ? 5 : 11;
 
@@ -237,7 +231,7 @@ export const Dashboard = () => {
     const categoryTotals: { [key: number]: number } = {};
 
     allTransactions
-      .filter((t) => t.type_id === 2) // Apenas despesas
+      .filter((t) => t.type_id === 2)
       .forEach((t) => {
         if (!categoryTotals[t.category_id]) {
           categoryTotals[t.category_id] = 0;
@@ -250,7 +244,7 @@ export const Dashboard = () => {
         const category = categories.find((c) => c.id === parseInt(categoryId));
         return {
           name: category?.name || "Outros",
-          value,
+          value: parseFloat(value.toFixed(2)),
           color: chartColors[index % chartColors.length],
           legendFontColor: colors.gray[800],
           legendFontSize: 12,
@@ -266,7 +260,7 @@ export const Dashboard = () => {
     backgroundColor: colors.white,
     backgroundGradientFrom: colors.white,
     backgroundGradientTo: colors.white,
-    decimalPlaces: 0,
+    decimalPlaces: 2,
     color: (opacity = 1) => `rgba(237, 74, 76, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(50, 50, 56, ${opacity})`,
     style: {

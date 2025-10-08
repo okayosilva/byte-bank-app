@@ -7,6 +7,7 @@ Um aplicativo mobile moderno de gerenciamento financeiro pessoal desenvolvido co
 
 ## 📋 Índice
 
+- [Atualizações Recentes](#-atualizações-recentes)
 - [Tech Challenge - Mapeamento de Requisitos](#-tech-challenge---mapeamento-de-requisitos)
 - [Visão Geral](#-visão-geral)
 - [Tecnologias](#-tecnologias)
@@ -19,6 +20,90 @@ Um aplicativo mobile moderno de gerenciamento financeiro pessoal desenvolvido co
 - [Arquitetura](#-arquitetura)
 - [Banco de Dados](#-banco-de-dados)
 - [Vídeo Demonstrativo](#-vídeo-demonstrativo)
+
+## 🔄 Atualizações Recentes
+
+### Última Atualização - Outubro 2025
+
+#### 🎨 Melhorias de Autenticação
+
+**Context de Autenticação (`src/context/auth.context.tsx`)**
+
+- ✅ Implementação completa do fluxo de autenticação com Supabase
+- ✅ Gerenciamento de sessão persistente com tokens JWT
+- ✅ Tratamento robusto de erros de autenticação
+- ✅ Validação de email confirmado antes do login
+- ✅ Sistema de reenvio de email de confirmação
+- ✅ Detecção de emails duplicados no cadastro
+- ✅ Feedback claro ao usuário sobre erros específicos
+- ✅ Auto-recuperação de sessão ao reabrir o app
+
+**Tela de Login (`src/screens/login/loginForm/index.tsx`)**
+
+- ✅ Melhorias no tratamento de erros de login
+- ✅ Exibição de mensagens de erro contextualizadas
+- ✅ Estados de loading durante autenticação
+- ✅ Reset automático de erros entre tentativas
+- ✅ Validação de campos com feedback em tempo real
+- ✅ Interface limpa e responsiva
+
+#### 📊 Melhorias no Dashboard
+
+**Dashboard Completo (`src/screens/dashboard/index.tsx`)**
+
+- ✅ Seletor de ano com modo "Todos" e anos específicos
+- ✅ Cards de resumo financeiro (Receitas, Despesas, Saldo)
+- ✅ Sistema de insights financeiros automáticos:
+  - Comparação mês a mês (modo "Todos")
+  - Comparação ano a ano (anos específicos)
+  - Insights de economia e aumento por categoria
+  - Detecção de padrões financeiros relevantes
+- ✅ Gráficos interativos:
+  - Gráfico de linha com evolução temporal
+  - Gráfico de pizza com despesas por categoria
+  - Legendas e cores acessíveis
+- ✅ Estatísticas detalhadas:
+  - Total de transações
+  - Média de despesas
+  - Média de receitas
+- ✅ Estados vazios informativos
+- ✅ Loading states durante carregamento de dados
+- ✅ Performance otimizada com queries paralelas
+
+#### 🔧 Melhorias Técnicas
+
+**Configuração do Supabase (`src/utils/constants/supabase.ts`)**
+
+- ✅ Arquivo de configuração centralizado
+- ✅ Credenciais do Supabase organizadas
+- ✅ Pronto para diferentes ambientes (dev/prod)
+
+#### 📈 Performance e UX
+
+- ✅ Remoção de comentários desnecessários para código mais limpo
+- ✅ Melhor organização de imports
+- ✅ Otimização de re-renders com estados controlados
+- ✅ Feedback visual em todas as operações
+- ✅ Tratamento de casos extremos (erros, estados vazios)
+- ✅ Animações suaves em transições
+
+#### 🔐 Segurança
+
+- ✅ Validação de sessão ao iniciar o app
+- ✅ Proteção contra tentativas de login sem email confirmado
+- ✅ Feedback claro sobre falhas de autenticação
+- ✅ Tokens JWT gerenciados automaticamente
+- ✅ Logout seguro com limpeza de sessão
+
+#### 🎯 Próximos Passos Sugeridos
+
+- [ ] Implementar recuperação de senha
+- [ ] Adicionar autenticação social (Google, Apple)
+- [ ] Melhorar cache local de transações
+- [ ] Adicionar modo offline
+- [ ] Implementar notificações push
+
+---
 
 ## 🎯 Visão Geral
 
@@ -175,6 +260,10 @@ Este projeto atende a todos os requisitos do Tech Challenge da FIAP.
 #### Animações e UI/UX ✅
 
 - **React Native Reanimated** `~4.1.1` - Animações de alta performance
+- **React Native Animated API** - Animações nativas integradas
+  - Componente `AnimatedView` customizado com fade in/out
+  - `useAnimatedView` hook para controle de animações
+  - Transições suaves entre telas e componentes
 - **@gorhom/bottom-sheet** `^5.2.6` - Bottom sheets nativos
 - **NativeWind** `^4.2.1` - TailwindCSS para React Native
 - Feedback visual em todas as ações
@@ -267,6 +356,9 @@ Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens co
 - **NativeWind** `^4.2.1` - TailwindCSS para React Native
 - **TailwindCSS** `^3.4.17` - Framework CSS utility-first
 - **React Native Reanimated** `~4.1.1` - Animações de alta performance
+- **React Native Animated API** - API de animação nativa do React Native
+  - Componente `AnimatedView` para transições suaves
+  - Hook `useAnimatedView` para controle de fade in/out
 - **@gorhom/bottom-sheet** `^5.2.6` - Bottom sheets nativos
 
 ### Gráficos & Visualização
@@ -653,50 +745,128 @@ export const EXPO_PUBLIC_SUPABASE_ANON_KEY = "sua-anon-key";
 
 ### 3. Configurar Banco de Dados
 
-Execute os seguintes comandos SQL no editor SQL do Supabase:
+Execute o seguinte script SQL completo no editor SQL do Supabase (SQL Editor):
 
 ```sql
--- Criar tabela de categorias de transações
+BEGIN;
+
+DROP TRIGGER IF EXISTS createAuthUser ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS transaction_categories CASCADE;
+DROP TABLE IF EXISTS transaction_types CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS migrations CASCADE;
+
+CREATE TABLE migrations (
+  id SERIAL PRIMARY KEY NOT NULL,
+  timestamp BIGINT NOT NULL,
+  name VARCHAR NOT NULL
+);
+
+INSERT INTO migrations VALUES
+  (1, 1731706554960, 'CreateUsersTable1731706554960'),
+  (2, 1741746343254, 'CreateTransactionsTable1741746343254'),
+  (3, 1741911466558, 'CreateTransactionTypeTable1741911466558'),
+  (4, 1741911575176, 'CreateTransactionCategoriesTable1741911575176'),
+  (5, 1742959827377, 'CreateDescriptionColunm1742959827377');
+
+CREATE TABLE users (
+  id UUID PRIMARY KEY NOT NULL,
+  name VARCHAR(50) NOT NULL,
+  email VARCHAR NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE transaction_types (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name VARCHAR NOT NULL
+);
+
+INSERT INTO transaction_types VALUES
+  (1, 'Entrada'),
+  (2, 'Saída');
+
 CREATE TABLE transaction_categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+  id SERIAL PRIMARY KEY NOT NULL,
+  name VARCHAR NOT NULL
 );
 
--- Inserir categorias padrão
-INSERT INTO transaction_categories (name) VALUES
-  ('Alimentação'),
-  ('Transporte'),
-  ('Saúde'),
-  ('Educação'),
-  ('Lazer'),
-  ('Moradia'),
-  ('Outros');
+INSERT INTO transaction_categories VALUES
+  (1, 'Casa'),
+  (2, 'Academia'),
+  (3, 'Saúde'),
+  (4, 'Aluguel'),
+  (5, 'Trabalho'),
+  (6, 'Freelance'),
+  (7, 'Emergência'),
+  (8, 'Reforma');
 
--- Criar tabela de transações
 CREATE TABLE transactions (
-  id SERIAL PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  type_id INTEGER NOT NULL CHECK (type_id IN (1, 2)), -- 1: Receita, 2: Despesa
-  category_id INTEGER REFERENCES transaction_categories(id),
-  value INTEGER NOT NULL, -- Valor em centavos
-  description TEXT NOT NULL,
+  id SERIAL PRIMARY KEY NOT NULL,
+  type_id INTEGER NOT NULL,
+  category_id INTEGER NOT NULL,
+  user_id UUID NOT NULL,
+  value INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ,
+  description VARCHAR,
   receipt_url TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP,
-  deleted_at TIMESTAMP
+  CONSTRAINT FK_transaction_category_id FOREIGN KEY (category_id) REFERENCES transaction_categories (id),
+  CONSTRAINT FK_transaction_type_id FOREIGN KEY (type_id) REFERENCES transaction_types (id),
+  CONSTRAINT FK_transaction_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- Criar índices para melhor performance
 CREATE INDEX idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
 CREATE INDEX idx_transactions_type_id ON transactions(type_id);
 CREATE INDEX idx_transactions_category_id ON transactions(category_id);
+CREATE INDEX idx_transactions_deleted_at ON transactions(deleted_at);
+CREATE INDEX idx_users_email ON users(email);
 
--- Habilitar Row Level Security (RLS)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.users (id, name, email)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'name', 'Usuário'),
+    new.email
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  RETURN new;
+EXCEPTION
+  WHEN unique_violation THEN
+    RAISE WARNING 'Email já existe na tabela users: %', new.email;
+    RETURN new;
+  WHEN OTHERS THEN
+    RAISE WARNING 'Erro ao inserir usuário na tabela users: %', SQLERRM;
+    RETURN new;
+END;
+$$;
+
+CREATE TRIGGER createAuthUser
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transaction_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transaction_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- Políticas de segurança - usuários só veem suas próprias transações
+CREATE POLICY "Users can view own profile"
+  ON users FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON users FOR UPDATE
+  USING (auth.uid() = id);
+
 CREATE POLICY "Users can view own transactions"
   ON transactions FOR SELECT
   USING (auth.uid() = user_id);
@@ -712,30 +882,73 @@ CREATE POLICY "Users can update own transactions"
 CREATE POLICY "Users can delete own transactions"
   ON transactions FOR DELETE
   USING (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated users can view categories"
+  ON transaction_categories FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Authenticated users can view types"
+  ON transaction_types FOR SELECT
+  TO authenticated
+  USING (true);
+
+COMMIT;
 ```
 
 ### 4. Configurar Storage
 
 1. No painel do Supabase, vá em **Storage**
-2. Crie um novo bucket chamado `receipts`
-3. Configure as políticas de acesso:
+2. Clique em **Create a new bucket**
+3. Nome do bucket: `receipts`
+4. Configuração: **Private** (recomendado para segurança)
+5. Após criar o bucket, execute no SQL Editor:
 
 ```sql
--- Permitir upload de arquivos
+DROP POLICY IF EXISTS "Users can upload receipts" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own receipts" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own receipts" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own receipts" ON storage.objects;
+
 CREATE POLICY "Users can upload receipts"
   ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'receipts' AND auth.uid()::text = (storage.foldername(name))[1]);
+  WITH CHECK (
+    bucket_id = 'receipts' AND
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
 
--- Permitir visualização de arquivos
 CREATE POLICY "Users can view own receipts"
   ON storage.objects FOR SELECT
-  USING (bucket_id = 'receipts' AND auth.uid()::text = (storage.foldername(name))[1]);
+  USING (
+    bucket_id = 'receipts' AND
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
 
--- Permitir exclusão de arquivos
 CREATE POLICY "Users can delete own receipts"
   ON storage.objects FOR DELETE
-  USING (bucket_id = 'receipts' AND auth.uid()::text = (storage.foldername(name))[1]);
+  USING (
+    bucket_id = 'receipts' AND
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Users can update own receipts"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'receipts' AND
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
 ```
+
+### 5. Configurar Autenticação
+
+1. No painel do Supabase, vá em **Authentication → Providers**
+2. Habilite **Email** provider
+3. **Para desenvolvimento/teste**: Desabilite "Confirm email" (opcional)
+4. Configure URLs de redirecionamento:
+   - **Site URL**: `exp://localhost:8081`
+   - **Redirect URLs**:
+     - `exp://localhost:8081`
+     - `http://localhost:8081`
 
 ## 🏃 Executando o Projeto
 
