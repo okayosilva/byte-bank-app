@@ -94,15 +94,6 @@ Um aplicativo mobile moderno de gerenciamento financeiro pessoal desenvolvido co
 - ✅ Feedback claro sobre falhas de autenticação
 - ✅ Tokens JWT gerenciados automaticamente
 - ✅ Logout seguro com limpeza de sessão
-
-#### 🎯 Próximos Passos Sugeridos
-
-- [ ] Implementar recuperação de senha
-- [ ] Adicionar autenticação social (Google, Apple)
-- [ ] Melhorar cache local de transações
-- [ ] Adicionar modo offline
-- [ ] Implementar notificações push
-
 ---
 
 ## 🎯 Visão Geral
@@ -1105,7 +1096,7 @@ Como parte da entrega do Tech Challenge, incluímos um vídeo demonstrativo de a
 
 ### 🎥 Link do Vídeo
 
-> **[Inserir link do vídeo aqui após upload no YouTube/Vimeo/Google Drive]**
+> **[Acesse aqui](https://youtu.be/B1fcAxLaA20)]**
 
 ## 🤝 Contribuindo
 
