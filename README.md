@@ -295,17 +295,6 @@ Vídeo de até 5 minutos demonstrando:
 - Integração com Supabase (substituindo Firebase)
 - Dashboard com gráficos
 
-### 🔄 Diferencial: Firebase → Supabase
-
-Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens como:
-
-- ✅ **PostgreSQL** ao invés de NoSQL - Queries mais poderosas e relacionais
-- ✅ **Row Level Security (RLS)** - Segurança a nível de linha nativa
-- ✅ **SQL Queries** - Maior flexibilidade para filtros complexos
-- ✅ **Open Source** - Sem vendor lock-in
-- ✅ **Mesmas funcionalidades** - Auth, Database, Storage, Real-time
-- ✅ **Melhor performance** - Índices e otimizações SQL
-
 ## 🚀 Tecnologias
 
 ### Core
