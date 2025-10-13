@@ -1085,7 +1085,7 @@ Como parte da entrega do Tech Challenge, incluímos um vídeo demonstrativo de a
 
 ### 🎥 Link do Vídeo
 
-> **[Acesse aqui](https://youtu.be/B1fcAxLaA20)]**
+> **[Acesse aqui](https://youtu.be/B1fcAxLaA20)**
 
 ## 🤝 Contribuindo
 
