@@ -94,15 +94,6 @@ Um aplicativo mobile moderno de gerenciamento financeiro pessoal desenvolvido co
 - ✅ Feedback claro sobre falhas de autenticação
 - ✅ Tokens JWT gerenciados automaticamente
 - ✅ Logout seguro com limpeza de sessão
-
-#### 🎯 Próximos Passos Sugeridos
-
-- [ ] Implementar recuperação de senha
-- [ ] Adicionar autenticação social (Google, Apple)
-- [ ] Melhorar cache local de transações
-- [ ] Adicionar modo offline
-- [ ] Implementar notificações push
-
 ---
 
 ## 🎯 Visão Geral
@@ -303,17 +294,6 @@ Vídeo de até 5 minutos demonstrando:
 - Upload de anexos (comprovantes)
 - Integração com Supabase (substituindo Firebase)
 - Dashboard com gráficos
-
-### 🔄 Diferencial: Firebase → Supabase
-
-Este projeto utiliza **Supabase** ao invés de Firebase, oferecendo vantagens como:
-
-- ✅ **PostgreSQL** ao invés de NoSQL - Queries mais poderosas e relacionais
-- ✅ **Row Level Security (RLS)** - Segurança a nível de linha nativa
-- ✅ **SQL Queries** - Maior flexibilidade para filtros complexos
-- ✅ **Open Source** - Sem vendor lock-in
-- ✅ **Mesmas funcionalidades** - Auth, Database, Storage, Real-time
-- ✅ **Melhor performance** - Índices e otimizações SQL
 
 ## 🚀 Tecnologias
 
@@ -1105,7 +1085,7 @@ Como parte da entrega do Tech Challenge, incluímos um vídeo demonstrativo de a
 
 ### 🎥 Link do Vídeo
 
-> **[Inserir link do vídeo aqui após upload no YouTube/Vimeo/Google Drive]**
+> **[Acesse aqui](https://youtu.be/B1fcAxLaA20)**
 
 ## 🤝 Contribuindo
 
